@@ -1,10 +1,15 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import { ArrowRight, ShieldCheck, Zap, Globe, Github, Twitter, Linkedin } from "lucide-react"
 import Link from "next/link"
+import InfiniteGrid from "@/components/ui/infinite-grid"
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="relative min-h-screen">
+      <InfiniteGrid />
+      <div className="relative z-10">
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-border/50 backdrop-blur-md sticky top-0 z-50">
         <Link className="flex items-center justify-center gap-2" href="/">
@@ -167,6 +172,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   )
 }
