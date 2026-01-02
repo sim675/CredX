@@ -17,16 +17,42 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("msme")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      email,
-      role,
-    })
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data?.error ?? "Something went wrong. Please try again.")
+        return
+      }
+
+      login({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      })
+    } catch (_err) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -134,8 +160,17 @@ export default function SignUpPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full h-11 text-base">
-              Create Account
+            {error && (
+              <p className="w-full text-sm text-destructive text-center">
+                {error}
+              </p>
+            )}
+            <Button
+              type="submit"
+              className="w-full h-11 text-base"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating Account..." : "Create Account"}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}

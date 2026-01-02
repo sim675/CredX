@@ -13,21 +13,42 @@ import Link from "next/link"
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // <CHANGE> Updated mock role inference to use bigbuyer instead of admin
-    let role: "msme" | "investor" | "bigbuyer" = "msme"
-    if (email.includes("investor")) role = "investor"
-    if (email.includes("buyer")) role = "bigbuyer"
+    setIsSubmitting(true)
+    setError(null)
 
-    login({
-      id: "1",
-      name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
-      email,
-      role,
-    })
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data?.error ?? "Invalid email or password")
+        return
+      }
+
+      login({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      })
+    } catch (_err) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -84,8 +105,17 @@ export default function SignInPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full h-11 text-base">
-              Sign In
+            {error && (
+              <p className="w-full text-sm text-destructive text-center">
+                {error}
+              </p>
+            )}
+            <Button
+              type="submit"
+              className="w-full h-11 text-base"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
               Don&apos;t have an account?{" "}
