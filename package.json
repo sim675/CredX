@@ -6,7 +6,10 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "contracts:compile": "hardhat compile",
+    "contracts:deploy:amoy": "hardhat run scripts/deploy.js --network polygonAmoy",
+    "contracts:deploy:polygon": "hardhat run scripts/deploy.js --network polygon"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -43,10 +46,12 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "dotenv": "^16.4.5",
     "embla-carousel-react": "8.5.1",
     "framer-motion": "^12.23.26",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
+    "mongoose": "^9.0.2",
     "next": "16.0.10",
     "next-themes": "^0.4.6",
     "react": "19.2.0",
@@ -59,6 +64,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
+    "web3": "^4.16.0",
     "zod": "3.25.76"
   },
   "devDependencies": {
@@ -69,6 +75,8 @@
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "hardhat": "^2.22.13",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0"
   }
 }
