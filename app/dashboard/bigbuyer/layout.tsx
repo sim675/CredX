@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import WalletDropdown from "@/components/WalletDropdown";
 import { AppSidebar } from "@/components/dashboard/sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/hooks/use-auth"

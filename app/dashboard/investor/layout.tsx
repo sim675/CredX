@@ -1,7 +1,9 @@
 import type React from "react"
+import WalletDropdown from "@/components/WalletDropdown";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/dashboard/sidebar"
 import { Separator } from "@/components/ui/separator"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
