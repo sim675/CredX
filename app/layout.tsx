@@ -1,4 +1,5 @@
 import type React from "react"
+import { Web3Provider } from "@/components/providers/web3-provider";
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
@@ -16,17 +17,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <html lang="en">
+      <body>
+        <Web3Provider>
           {children}
-          <Analytics />
-        </ThemeProvider>
+        </Web3Provider>
       </body>
     </html>
-  )
+  );
 }
