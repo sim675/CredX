@@ -1,107 +1,257 @@
-'use client';
-
 import { Button } from "@/components/ui/button"
+import Web3Background from "@/components/Web3Background"
 import { ArrowRight, ShieldCheck, Zap, Globe, Github, Twitter, Linkedin } from "lucide-react"
 import Link from "next/link"
-import InfiniteGrid from "@/components/ui/infinite-grid"
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen">
-      <InfiniteGrid />
-      <div className="relative z-10">
+    <div className="flex flex-col min-h-screen">
+      <Web3Background />
+
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-border/50 backdrop-blur-md sticky top-0 z-50">
         <Link className="flex items-center justify-center gap-2" href="/">
-          <div className="bg-primary size-8 rounded flex items-center justify-center text-primary-foreground font-bold">
+          <div className="size-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 
+                          text-primary-foreground font-semibold flex items-center justify-center
+                          shadow-md">
             IC
           </div>
-          <span className="font-bold text-xl tracking-tighter">InvoChain</span>
+
+          <span className="text-xl font-semibold tracking-tight text-foreground
+                          transition-colors duration-200 hover:text-primary cursor-pointer">
+            InvoChain
+          </span>
+
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#features">
+        <nav
+          className="ml-auto flex items-center gap-5 sm:gap-7
+                    rounded-full px-5 py-2
+                    bg-background/40 backdrop-blur-xl
+                    border border-white/10 shadow-lg"
+        >
+          <Link
+            href="#features"
+            className="relative text-sm font-medium text-foreground/80
+                      transition-all duration-300
+                      hover:text-primary hover:scale-105"
+          >
             Features
+            <span className="absolute left-0 -bottom-1 h-[2px] w-0
+                            bg-primary transition-all duration-300
+                            group-hover:w-full" />
           </Link>
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works">
+
+          <Link
+            href="#how-it-works"
+            className="relative text-sm font-medium text-foreground/80
+                      transition-all duration-300
+                      hover:text-primary hover:scale-105"
+          >
             Process
           </Link>
+
           <Link href="/auth/signin">
-            <Button variant="ghost" size="sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full px-4
+                        transition-all duration-300
+                        hover:bg-primary/10 hover:text-primary
+                        hover:scale-105"
+            >
               Sign In
             </Button>
           </Link>
+
           <Link href="/auth/signup">
-            <Button size="sm">Create Account</Button>
+            <Button
+              size="sm"
+              className="rounded-full px-5
+                        bg-gradient-to-r from-primary to-primary/80
+                        shadow-md transition-all duration-300
+                        hover:shadow-xl hover:scale-105"
+            >
+              Create Account
+            </Button>
           </Link>
         </nav>
+
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 flex flex-col items-center justify-center text-center px-4">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary font-medium border border-primary/20">
-                Revolutionizing RWA Finance
-              </div>
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl max-w-3xl">
-                Decentralized Invoice Financing Marketplace
-              </h1>
-              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl leading-relaxed">
-                Instant liquidity for MSMEs through tokenized invoices and smart contracts. Empowering businesses with
-                the global capital they deserve.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link href="/auth/signup">
-                  <Button size="lg" className="h-12 px-8 text-base">
-                    Get Started <ArrowRight className="ml-2 size-4" />
-                  </Button>
-                </Link>
-                <Link href="/auth/signin">
-                  <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-transparent">
-                    Marketplace Demo
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+     {/* Hero Section */}
+    <section className="relative w-full py-20 md:py-32 lg:py-40 xl:py-52 flex items-center justify-center text-center px-4">
 
-        {/* Features Section */}
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-accent/5">
-          <div className="container px-4 md:px-6 mx-auto">
-            <div className="grid gap-12 lg:grid-cols-3">
-              <div className="flex flex-col items-center text-center space-y-4 p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm">
-                <div className="p-3 rounded-full bg-primary/10 text-primary">
-                  <Zap className="size-6" />
-                </div>
-                <h3 className="text-xl font-bold">Instant Liquidity</h3>
-                <p className="text-muted-foreground">
-                  Get funded in hours, not weeks. Our automated verification engine speeds up the entire financing
-                  lifecycle.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center space-y-4 p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm">
-                <div className="p-3 rounded-full bg-primary/10 text-primary">
-                  <ShieldCheck className="size-6" />
-                </div>
-                <h3 className="text-xl font-bold">On-Chain Transparency</h3>
-                <p className="text-muted-foreground">
-                  Every invoice is tokenized as an NFT, ensuring verifiable ownership and cryptographic proof of escrow.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center space-y-4 p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm">
-                <div className="p-3 rounded-full bg-primary/10 text-primary">
-                  <Globe className="size-6" />
-                </div>
-                <h3 className="text-xl font-bold">Global Investor Pool</h3>
-                <p className="text-muted-foreground">
-                  Access borderless capital markets. Investors from anywhere can fund real-world yield opportunities.
-                </p>
-              </div>
-            </div>
+      {/* IMPORTANT: no background overlays here */}
+
+      <div className="container px-4 md:px-6">
+        <div className="flex flex-col items-center space-y-6">
+
+          {/* Minimal badge */}
+          <div className="inline-flex items-center rounded-full border border-white/20 bg-black/30 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
+            Revolutionizing RWA Finance
           </div>
-        </section>
+
+          {/* Heading */}
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl max-w-4xl text-white drop-shadow-md">
+            Decentralized Invoice <br className="hidden sm:block" />
+            Financing Marketplace
+          </h1>
+
+          {/* Subtitle */}
+          <p className="mx-auto max-w-[720px] text-white/80 md:text-xl leading-relaxed">
+            Instant liquidity for MSMEs through <span className="text-white font-medium">tokenized invoices</span> and 
+            <span className="text-white font-medium"> smart contracts</span>.  
+            Empowering businesses with seamless access to global capital.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <Link href="/auth/signup">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base rounded-xl
+                  bg-primary text-primary-foreground
+                  transition-transform duration-300 hover:scale-105">
+                Get Started
+                <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </Link>
+
+            <Link href="/auth/signin">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base rounded-xl
+                  border-white/30 text-white
+                  hover:bg-white/10 transition-all duration-300">
+                Marketplace Demo
+              </Button>
+            </Link>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+
+       {/* Features Section */}
+<section
+  id="features"
+  className="relative w-full py-16 md:py-28 lg:py-36"
+>
+  <div className="container px-4 md:px-6 mx-auto">
+    <div className="grid gap-10 lg:grid-cols-3">
+
+      {/* Feature Card */}
+      <div
+        className="group relative flex flex-col items-center text-center space-y-4
+        p-8 rounded-2xl
+        border border-white/10
+        bg-black/25 backdrop-blur-md
+        transition-all duration-700 ease-out
+        hover:border-primary/30
+        hover:scale-[1.02]"
+      >
+        {/* Ambient glow */}
+        <div
+          className="pointer-events-none absolute -inset-2 rounded-2xl opacity-0
+          group-hover:opacity-100 transition duration-700
+          blur-3xl bg-primary/15"
+        />
+
+        {/* Icon */}
+        <div
+          className="relative p-4 rounded-full bg-primary/10 text-primary
+          transition-all duration-700
+          group-hover:bg-primary/15
+          group-hover:-translate-y-0.5"
+        >
+          <Zap className="size-6" />
+        </div>
+
+        <h3 className="text-xl font-bold text-white">
+          Instant Liquidity
+        </h3>
+
+        <p className="text-white/70 leading-relaxed">
+          Get funded in hours, not weeks. Our automated verification engine speeds up the entire financing lifecycle.
+        </p>
+      </div>
+
+      {/* Feature Card */}
+      <div
+        className="group relative flex flex-col items-center text-center space-y-4
+        p-8 rounded-2xl
+        border border-white/10
+        bg-black/25 backdrop-blur-md
+        transition-all duration-700 ease-out
+        hover:border-primary/30
+        hover:scale-[1.02]"
+      >
+        <div
+          className="pointer-events-none absolute -inset-2 rounded-2xl opacity-0
+          group-hover:opacity-100 transition duration-700
+          blur-3xl bg-primary/15"
+        />
+
+        <div
+          className="relative p-4 rounded-full bg-primary/10 text-primary
+          transition-all duration-700
+          group-hover:bg-primary/15
+          group-hover:-translate-y-0.5"
+        >
+          <ShieldCheck className="size-6" />
+        </div>
+
+        <h3 className="text-xl font-bold text-white">
+          On-Chain Transparency
+        </h3>
+
+        <p className="text-white/70 leading-relaxed">
+          Every invoice is tokenized as an NFT, ensuring verifiable ownership and cryptographic proof of escrow.
+        </p>
+      </div>
+
+      {/* Feature Card */}
+      <div
+        className="group relative flex flex-col items-center text-center space-y-4
+        p-8 rounded-2xl
+        border border-white/10
+        bg-black/25 backdrop-blur-md
+        transition-all duration-700 ease-out
+        hover:border-primary/30
+        hover:scale-[1.02]"
+      >
+        <div
+          className="pointer-events-none absolute -inset-2 rounded-2xl opacity-0
+          group-hover:opacity-100 transition duration-700
+          blur-3xl bg-primary/15"
+        />
+
+        <div
+          className="relative p-4 rounded-full bg-primary/10 text-primary
+          transition-all duration-700
+          group-hover:bg-primary/15
+          group-hover:-translate-y-0.5"
+        >
+          <Globe className="size-6" />
+        </div>
+
+        <h3 className="text-xl font-bold text-white">
+          Global Investor Pool
+        </h3>
+
+        <p className="text-white/70 leading-relaxed">
+          Access borderless capital markets. Investors from anywhere can fund real-world yield opportunities.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
       </main>
 
       {/* Footer */}
@@ -141,13 +291,13 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h4 className="text-sm font-bold uppercase tracking-wider">Company</h4>
               <nav className="flex flex-col gap-2">
-                <Link className="text-sm text-muted-foreground hover:text-primary transition-colors" href="/about">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
                   About
                 </Link>
-                <Link className="text-sm text-muted-foreground hover:text-primary transition-colors" href="/privacy">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
                   Privacy
                 </Link>
-                <Link className="text-sm text-muted-foreground hover:text-primary transition-colors" href="/terms">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
                   Terms
                 </Link>
               </nav>
@@ -172,7 +322,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      </div>
     </div>
   )
 }
