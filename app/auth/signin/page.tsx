@@ -12,27 +12,44 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
+import { AlertCircle } from "lucide-react"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // <CHANGE> Updated mock role inference to use bigbuyer instead of admin
-    let role: "msme" | "investor" | "bigbuyer" = "msme"
-    if (email.includes("investor")) role = "investor"
-    if (email.includes("buyer")) role = "bigbuyer"
+    setIsLoading(true)
+    setError(null)
 
-    login({
-      id: "1",
-      name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
-      email,
-      role,
-    })
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+
+      login(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const [showPassword, setShowPassword] = useState(false)
@@ -67,6 +84,14 @@ const [glowPos, setGlowPos] = useState({
           <CardDescription className="text-center">Enter your credentials to access your dashboard</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="px-6 pt-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </div>
+          )}
 
         <div className="relative rounded-2xl overflow-hidden group">
   {/* Soft hover glow (static) */}
@@ -175,6 +200,7 @@ const [glowPos, setGlowPos] = useState({
   {/* Primary CTA */}
   <Button
     type="submit"
+    disabled={isLoading}
     className="
       group relative w-full h-12 text-base font-semibold
       rounded-xl
@@ -183,6 +209,7 @@ const [glowPos, setGlowPos] = useState({
       hover:scale-[1.02]
       hover:shadow-[0_0_30px_rgba(59,130,246,0.45)]
       focus-visible:ring-2 focus-visible:ring-primary/50
+      disabled:opacity-50 disabled:cursor-not-allowed
     "
   >
     {/* Soft glow */}
@@ -194,7 +221,7 @@ const [glowPos, setGlowPos] = useState({
         blur-xl bg-primary/30
       "
     />
-    <span className="relative z-10">Sign In</span>
+    <span className="relative z-10">{isLoading ? "Signing in..." : "Sign In"}</span>
   </Button>
 
   {/* Secondary text */}

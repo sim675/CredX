@@ -11,6 +11,7 @@ interface User {
   name: string
   email: string
   role: UserRole
+  walletAddress?: string
 }
 
 export function useAuth() {
@@ -29,6 +30,12 @@ export function useAuth() {
   const login = (userData: User) => {
     setUser(userData)
     localStorage.setItem("invochain_user", JSON.stringify(userData))
+
+    // Redirect to wallet connection if wallet not bound
+    if (!userData.walletAddress) {
+      router.push("/connect-wallet")
+      return
+    }
 
     // <CHANGE> Updated routing to use bigbuyer instead of admin
     if (userData.role === "msme") router.push("/dashboard/msme")

@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         name: createdUser.name,
         email: createdUser.email,
         role: createdUser.role,
+        walletAddress: createdUser.walletAddress || undefined,
       },
       { status: 201 }
     );

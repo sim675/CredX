@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth, type UserRole } from "@/hooks/use-auth"
-import { Building2, Landmark, Briefcase } from "lucide-react"
+import { Building2, Landmark, Briefcase, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -19,16 +20,36 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("msme")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      email,
-      role,
-    })
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed")
+      }
+
+      login(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Signup failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
 const [showPassword, setShowPassword] = useState(false)
@@ -57,6 +78,14 @@ const [showPassword, setShowPassword] = useState(false)
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="px-6 pt-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </div>
+          )}
           <div className="relative rounded-2xl overflow-hidden group">
   {/* Soft hover glow (static) */}
   <div
@@ -201,6 +230,7 @@ const [showPassword, setShowPassword] = useState(false)
           <CardFooter className="flex flex-col gap-4">
             <Button
                 type="submit"
+                disabled={isLoading}
                 className="
                   group relative w-full h-12 text-base font-semibold
                   rounded-xl
@@ -209,6 +239,7 @@ const [showPassword, setShowPassword] = useState(false)
                   hover:scale-[1.02]
                   hover:shadow-[0_0_30px_rgba(59,130,246,0.45)]
                   focus-visible:ring-2 focus-visible:ring-primary/50
+                  disabled:opacity-50 disabled:cursor-not-allowed
                 "
               >
                 {/* Soft glow */}
@@ -220,7 +251,7 @@ const [showPassword, setShowPassword] = useState(false)
                     blur-xl bg-primary/30
                   "
                 />
-                <span className="relative z-10">Create Account</span>
+                <span className="relative z-10">{isLoading ? "Creating account..." : "Create Account"}</span>
               </Button>
             <div className="text-sm text-center text-white/70">
     Already have an account?{" "}
