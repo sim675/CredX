@@ -9,6 +9,7 @@ function WalletBalance() {
   const { address, isConnected } = useAccount()
   const { data: balance, isLoading } = useBalance({
     address: address,
+    token: '0xActualPOLTokenAddress', 
     query: {
       enabled: isConnected && !!address,
     },

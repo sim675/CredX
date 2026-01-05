@@ -22,7 +22,7 @@ export default function BigBuyerWalletPage() {
   const { address, isConnected } = useAccount()
   const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
     address: address,
-    token: '0x1234567890abcdef', // Replace with actual POL token address
+    token: '0xActualPOLTokenAddress', // Replace with actual POL token address
   })
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true)

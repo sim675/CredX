@@ -23,7 +23,7 @@ export default function InvestorWalletPage() {
   const { address, isConnected } = useAccount()
   const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
     address: address,
-    token: '0x1234567890abcdef', // Replace with actual POL token address
+    token: '0xActualPOLTokenAddress', // Replace with actual POL token address
   })
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([])
   const [investments, setInvestments] = useState<Record<number, string>>({})

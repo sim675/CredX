@@ -24,7 +24,7 @@ export default function MSMEWalletPage() {
   const publicClient = usePublicClient()
   const { data: balanceData, isLoading: isLoadingBalance, refetch: refetchBalance } = useBalance({
     address: address,
-    token: '0x1234567890abcdef', // Replace with actual POL token address
+    token: '0x9c3C68a85101fD4c756e64678b26f2bFC3A518c4', // Replace with actual POL token address
   })
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true)
