@@ -105,7 +105,7 @@ const [showPassword, setShowPassword] = useState(false)
                 </Label>
                 <Input
                   id="name"
-                  placeholder="John Doe"
+                  placeholder=""
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -126,7 +126,7 @@ const [showPassword, setShowPassword] = useState(false)
                 <Input
                   id="email"
                   type="email"
-                  placeholder="john@example.com"
+                  placeholder=""
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
