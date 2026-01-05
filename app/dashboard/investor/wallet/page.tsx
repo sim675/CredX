@@ -22,8 +22,7 @@ function formatFullAddress(addr: string) {
 export default function InvestorWalletPage() {
   const { address, isConnected } = useAccount()
   const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
-    address: address,
-    token: '0xActualPOLTokenAddress', // Replace with actual POL token address
+    address,
   })
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([])
   const [investments, setInvestments] = useState<Record<number, string>>({})

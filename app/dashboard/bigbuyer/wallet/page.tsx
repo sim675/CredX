@@ -21,8 +21,7 @@ function formatFullAddress(addr: string) {
 export default function BigBuyerWalletPage() {
   const { address, isConnected } = useAccount()
   const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
-    address: address,
-    token: '0xActualPOLTokenAddress', // Replace with actual POL token address
+    address,
   })
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true)

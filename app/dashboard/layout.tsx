@@ -4,7 +4,8 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useBalance } from "wagmi";
+import { formatEther } from "viem";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/sidebar";
@@ -41,6 +42,9 @@ export default function DashboardLayout({
   const { user, isLoading } = useAuth();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
+    address,
+  });
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [walletMismatch, setWalletMismatch] = useState(false);
@@ -108,23 +112,25 @@ export default function DashboardLayout({
             <Separator orientation="vertical" className="h-4 mx-2" />
 
             <Breadcrumb>
-  <BreadcrumbList>
-    <BreadcrumbItem>
-      <BreadcrumbPage>
-        {user.role === "msme"
-          ? "MSME Portal - POL"
-          : user.role === "investor"
-          ? "Investor Portal - POL"
-          : "Big Buyer Portal - POL"}
-      </BreadcrumbPage>
-    </BreadcrumbItem>
-  </BreadcrumbList>
-</Breadcrumb>
-
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {user.role === "msme"
+                      ? "MSME Portal - POL"
+                      : user.role === "investor"
+                      ? "Investor Portal - POL"
+                      : "Big Buyer Portal - POL"}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
 
-          {/* Right: Wallet */}
-          <div className="flex items-center">
+          {/* Right: Wallet and POL Balance */}
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium">
+              {isLoadingBalance ? "Loading..." : `${balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL`}
+            </div>
             <WalletDropdown />
           </div>
         </header>
