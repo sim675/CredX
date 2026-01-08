@@ -7,7 +7,13 @@ const HologramCoins = () => {
       {/* Energy beam */}
       <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-40 h-56
         bg-gradient-to-t from-cyan-400/70 via-purple-500/30 to-transparent
-        blur-xl opacity-250" />
+        blur-xl opacity-100" />
+
+        {/* Energy beam */}
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-40 h-56
+        bg-gradient-to-t from-cyan-400/70 via-purple-500/30 to-transparent
+        blur-xl opacity-100" />
+
 
       {/* Coins */}
       <div className="absolute inset-0 flex items-center justify-center">

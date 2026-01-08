@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useWalletClient } from "wagmi";
 import { ethers } from "ethers";
@@ -10,14 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Landmark, Clock, ArrowLeft } from "lucide-react";
+import { Wallet, ArrowLeft, FileText, ExternalLink, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchAllInvoices, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice";
 import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json";
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string;
 
-export default function InvestorInvestPage({ params }: { params: { id: string } }) {
+export default function InvestorInvestPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const invoiceId = Number(id);
+
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const { toast } = useToast();
@@ -28,10 +31,10 @@ export default function InvestorInvestPage({ params }: { params: { id: string } 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState("");
 
-  const invoiceId = Number(params.id);
-
   useEffect(() => {
     const loadInvoice = async () => {
+      if (invoiceId === null || Number.isNaN(invoiceId)) return;
+
       try {
         setIsLoading(true);
         const all = await fetchAllInvoices();
@@ -49,9 +52,7 @@ export default function InvestorInvestPage({ params }: { params: { id: string } 
       }
     };
 
-    if (!Number.isNaN(invoiceId)) {
-      loadInvoice();
-    }
+    loadInvoice();
   }, [invoiceId, toast]);
 
   if (!isConnected) {
@@ -92,6 +93,9 @@ export default function InvestorInvestPage({ params }: { params: { id: string } 
 
   const daysRemaining = calculateDaysRemaining(invoice.dueDate);
   const statusLabel = getStatusLabel(invoice.status);
+  
+  // Mock IPFS URL for the invoice document
+  const invoiceDocumentUrl = `https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`;
 
   const handleInvest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +149,7 @@ export default function InvestorInvestPage({ params }: { params: { id: string } 
       );
 
       const valueWei = ethers.parseEther(amount);
-      const tx = await contract.investInInvoice(invoiceId, { value: valueWei });
+      const tx = await contract.investInInvoice(invoiceId as number, { value: valueWei });
       await tx.wait();
 
       toast({
@@ -180,78 +184,113 @@ export default function InvestorInvestPage({ params }: { params: { id: string } 
 
       <Card className="border-border/50 bg-card/50">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Invoice #{invoice.id}</CardTitle>
-              <CardDescription className="mt-1">
-                Fund this MSME invoice and earn yield on repayment.
-              </CardDescription>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Invoice #{invoice.id}</h2>
+              <Badge variant={statusLabel === "Fundraising" ? "default" : "secondary"}>
+                {statusLabel}
+              </Badge>
             </div>
-            <Badge variant={statusLabel === "Fundraising" ? "outline" : "default"}>
-              {statusLabel}
-            </Badge>
+            
+            {/* View Document Button - Clear and Accessible */}
+            <div className="flex flex-col gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="w-fit gap-2 hover:bg-accent transition-colors"
+                aria-label="View the original invoice document in a new tab"
+              >
+                <a 
+                  href={invoiceDocumentUrl} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileText className="h-4 w-4" />
+                  View Original Invoice
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                Opens the original invoice uploaded by the MSME for verification.
+              </p>
+            </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                <Landmark className="size-3" /> Face Value
-              </p>
-              <p className="text-xl font-bold">{parseFloat(invoice.amount).toFixed(2)} MATIC</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Invoice Amount</p>
+                <p className="text-xl font-semibold">{parseFloat(invoice.amount).toFixed(2)} MATIC</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Funded</p>
+                <p className="text-xl font-semibold">{parseFloat(invoice.fundedAmount).toFixed(2)} MATIC</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Due Date</p>
+                <p className="text-xl font-semibold">{invoice.dueDate.toLocaleDateString()}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Days Remaining</p>
+                <p className={`text-xl font-semibold ${daysRemaining < 0 ? "text-destructive" : ""}`}>
+                  {daysRemaining}
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Interest Rate</p>
+                <p className="text-xl font-semibold text-green-500">
+                  {parseFloat(invoice.interestRate).toFixed(2)}%
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">Buyer Status</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xl font-semibold">
+                    {invoice.buyerVerified ? "Verified" : "Not Verified"}
+                  </p>
+                  {invoice.buyerVerified ? (
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-              <p className="text-xs text-muted-foreground mb-1">Remaining to Fund</p>
-              <p className="text-xl font-bold">{remainingToFund.toFixed(2)} MATIC</p>
-            </div>
+
+            <form onSubmit={handleInvest} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Investment Amount (MATIC)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.50"
+                  className="bg-background/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can invest up to {remainingToFund.toFixed(4)} MATIC.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  onClick={() => router.back()}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting || remainingToFund <= 0}>
+                  {isSubmitting ? "Confirming..." : "Confirm Investment"}
+                </Button>
+              </div>
+            </form>
           </div>
-
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-[10px] uppercase">Due Date</span>
-              <span className="flex items-center gap-1">
-                <Clock className="size-3" /> {invoice.dueDate.toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-[10px] uppercase">Days Remaining</span>
-              <span className={daysRemaining < 0 ? "text-red-500 font-semibold" : ""}>
-                {daysRemaining} days
-              </span>
-            </div>
-          </div>
-
-          <form onSubmit={handleInvest} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Investment Amount (MATIC)</label>
-              <Input
-                type="number"
-                min="0"
-                step="0.0001"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.50"
-                className="bg-background/50"
-              />
-              <p className="text-xs text-muted-foreground">
-                You can invest up to {remainingToFund.toFixed(4)} MATIC.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isSubmitting}
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting || remainingToFund <= 0}>
-                {isSubmitting ? "Confirming..." : "Confirm Investment"}
-              </Button>
-            </div>
-          </form>
         </CardContent>
       </Card>
     </div>

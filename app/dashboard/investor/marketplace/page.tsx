@@ -1,19 +1,36 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAccount } from "wagmi"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Filter, Clock, Landmark, FileText, Wallet } from "lucide-react"
-import { fetchFundraisingInvoices, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
+import { Search, Clock, Landmark, FileText, Wallet, ArrowRight, ExternalLink } from "lucide-react"
+import { 
+  fetchFundraisingInvoices, 
+  Invoice, 
+  getStatusLabel, 
+  calculateDaysRemaining, 
+  YieldRange, 
+  DurationRange 
+} from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import { InvoiceFilters } from "@/components/marketplace/InvoiceFilters"
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+}
+
+type SortOption = "yield" | "dueDate" | "risk"
+
+interface FilterState {
+  yieldRanges: YieldRange[]
+  durationRanges: DurationRange[]
+  verifiedBuyer: boolean
+  sortBy: SortOption
 }
 
 export default function InvoiceMarketplace() {
@@ -21,6 +38,12 @@ export default function InvoiceMarketplace() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<FilterState>({
+    yieldRanges: [],
+    durationRanges: [],
+    verifiedBuyer: false,
+    sortBy: "yield"
+  })
   const { toast } = useToast()
 
   useEffect(() => {
@@ -44,15 +67,74 @@ export default function InvoiceMarketplace() {
     loadInvoices()
   }, [toast])
 
-  const filteredInvoices = invoices.filter((inv) => {
-    if (!search) return true
-    const searchLower = search.toLowerCase()
-    return (
-      inv.id.toString().toLowerCase().includes(searchLower) ||
-      inv.msme.toLowerCase().includes(searchLower) ||
-      inv.buyer.toLowerCase().includes(searchLower)
-    )
-  })
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters)
+  }
+
+  const filteredAndSortedInvoices = useMemo(() => {
+    let result = [...invoices]
+
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase()
+      result = result.filter(inv => 
+        inv.id.toString().toLowerCase().includes(searchLower) ||
+        inv.msme.toLowerCase().includes(searchLower) ||
+        inv.buyer.toLowerCase().includes(searchLower)
+      )
+    }
+
+    // Apply yield filter
+    if (filters.yieldRanges.length > 0) {
+      result = result.filter(inv => {
+        const yieldValue = parseFloat(inv.interestRate) || 0
+        return filters.yieldRanges.some(range => {
+          if (range === 'high') return yieldValue >= 15
+          if (range === 'medium') return yieldValue >= 8 && yieldValue < 15
+          if (range === 'low') return yieldValue < 8
+          return true
+        })
+      })
+    }
+
+    // Apply duration filter
+    if (filters.durationRanges.length > 0) {
+      result = result.filter(inv => {
+        const dueDate = new Date(inv.dueDate)
+        const today = new Date()
+        const daysToDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        
+        return filters.durationRanges.some(range => {
+          if (range === 'short') return daysToDue < 30
+          if (range === 'medium') return daysToDue >= 30 && daysToDue <= 60
+          if (range === 'long') return daysToDue > 60
+          return true
+        })
+      })
+    }
+
+    // Apply verified buyer filter
+    if (filters.verifiedBuyer) {
+      result = result.filter(inv => inv.buyerVerified)
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'yield':
+          return (parseFloat(b.interestRate) || 0) - (parseFloat(a.interestRate) || 0)
+        case 'dueDate':
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        case 'risk':
+          // Assuming lower risk score is better
+          return (a.riskScore || 0) - (b.riskScore || 0)
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [invoices, search, filters])
 
   if (!isConnected) {
     return (
@@ -68,31 +150,32 @@ export default function InvoiceMarketplace() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoice Marketplace</h1>
-          <p className="text-muted-foreground">Discover and fund tokenized RWA invoices.</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Search issuers or ratings..."
-              className="pl-9 w-[250px] bg-background/50"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Invoice Marketplace</h1>
+            <p className="text-muted-foreground">Discover and fund tokenized RWA invoices.</p>
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="size-4" />
-          </Button>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by ID, MSME, or buyer..."
+                className="pl-9 w-full md:w-[250px] bg-background/50"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
+
+        <InvoiceFilters onFilterChange={handleFilterChange} />
       </div>
 
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="border-border/50">
+            <Card key={i} className="border-border/50 hover:border-primary/50 transition-colors">
               <CardHeader>
                 <Skeleton className="h-6 w-32 mb-2" />
                 <Skeleton className="h-4 w-24" />
@@ -103,7 +186,7 @@ export default function InvoiceMarketplace() {
             </Card>
           ))}
         </div>
-      ) : filteredInvoices.length === 0 ? (
+      ) : filteredAndSortedInvoices.length === 0 ? (
         <Card className="border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
             <FileText className="h-12 w-12 text-muted-foreground" />
@@ -117,7 +200,7 @@ export default function InvoiceMarketplace() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-          {filteredInvoices.map((invoice) => {
+          {filteredAndSortedInvoices.map((invoice) => {
             const daysRemaining = calculateDaysRemaining(invoice.dueDate)
             const fundingProgress = parseFloat(invoice.fundedAmount) / parseFloat(invoice.amount)
             const progressPercent = Math.min(fundingProgress * 100, 100)
@@ -141,57 +224,86 @@ export default function InvoiceMarketplace() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                        <Landmark className="size-3" /> Face Value
+                      <p className="text-xs text-muted-foreground mb-1">Face Value</p>
+                      <p className="text-lg font-bold">{parseFloat(invoice.amount).toFixed(2)} MATIC</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-background/50 border border-border/50">
+                      <p className="text-xs text-muted-foreground mb-1">Yield</p>
+                      <p className="text-lg font-bold text-green-500">
+                        {parseFloat(invoice.interestRate || '0').toFixed(1)}%
                       </p>
-                      <p className="text-xl font-bold">{parseFloat(invoice.amount).toFixed(2)} MATIC</p>
                     </div>
                     <div className="p-3 rounded-lg bg-background/50 border border-border/50">
                       <p className="text-xs text-muted-foreground mb-1">Funded</p>
-                      <p className="text-xl font-bold">{parseFloat(invoice.fundedAmount).toFixed(2)} MATIC</p>
-                      <p className="text-xs text-muted-foreground mt-1">{progressPercent.toFixed(1)}% funded</p>
+                      <p className="text-lg font-bold">{progressPercent.toFixed(1)}%</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-background/50 border border-border/50">
+                      <p className="text-xs text-muted-foreground mb-1">Term</p>
+                      <p className="text-lg font-bold">{daysRemaining}d</p>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Funding Progress</span>
-                      <span>{progressPercent.toFixed(1)}%</span>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Funding Progress</span>
+                        <span>{progressPercent.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-[10px] uppercase">Due Date</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="size-3" /> {invoice.dueDate.toLocaleDateString()}
-                      </span>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Buyer:</span>
+                        <span>{formatAddress(invoice.buyer)}</span>
+                        {(invoice as any).buyerVerified && (
+                          <Badge variant="outline" className="text-xs h-5 px-1.5">
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-[10px] uppercase">Days Remaining</span>
-                      <span className={daysRemaining < 0 ? "text-red-500 font-semibold" : ""}>
-                        {daysRemaining} days
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="pt-2 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground">
-                      Buyer: {formatAddress(invoice.buyer)}
-                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                      className="w-full"
+                      title="Opens the original invoice uploaded by the MSME for verification"
+                    >
+                      <a 
+                        href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <FileText className="size-3.5" />
+                        View Original Invoice
+                        <ExternalLink className="size-3" />
+                      </a>
+                    </Button>
                   </div>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button className="w-full group-hover:scale-[1.01] transition-transform" asChild>
-                    <Link href={`/dashboard/investor/invest/${invoice.id}`}>Invest Now</Link>
+                  <Button className="w-full group-hover:bg-primary/90 transition-colors" asChild>
+                    <Link 
+                      href={`/dashboard/investor/invest/${invoice.id}`} 
+                      className="flex items-center justify-center gap-2"
+                    >
+                      Invest Now <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
                   </Button>
                 </CardFooter>
               </Card>

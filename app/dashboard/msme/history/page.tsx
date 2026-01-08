@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CheckCircle2, AlertCircle, Wallet } from "lucide-react"
+import { CheckCircle2, AlertCircle, Wallet, FileText, ExternalLink } from "lucide-react"
 import { fetchInvoicesByMSME, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
@@ -197,6 +197,7 @@ export default function MSMEHistoryPage() {
                   <TableHead className="text-right">Amount Received</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -234,6 +235,25 @@ export default function MSMEHistoryPage() {
                             <Badge variant="outline">{statusLabel}</Badge>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          title="Opens the original invoice uploaded by the MSME for verification"
+                        >
+                          <a 
+                            href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1"
+                          >
+                            <FileText className="size-3" />
+                            View
+                            <ExternalLink className="size-2.5" />
+                          </a>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )

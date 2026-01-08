@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Eye, CreditCard, Wallet, FileText } from "lucide-react"
+import { Eye, CreditCard, Wallet, FileText, ExternalLink } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
@@ -249,6 +249,23 @@ export default function BigBuyerOutstandingPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            asChild
+                            title="Opens the original invoice uploaded by the MSME for verification"
+                          >
+                            <a 
+                              href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1"
+                            >
+                              <FileText className="size-3" />
+                              View
+                              <ExternalLink className="size-2.5" />
+                            </a>
+                          </Button>
                           {canRepay && (
                             <Button
                               size="sm"
