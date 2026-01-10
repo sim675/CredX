@@ -22,6 +22,8 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
     type: String,
     required: false,
     index: true,
+    lowercase: true, // Automatically converts 0xABC to 0xabc before saving
+    trim: true,      // Removes any accidental white space
   },
   createdAt: { type: Date, default: Date.now },
 });

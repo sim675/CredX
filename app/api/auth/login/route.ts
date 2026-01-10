@@ -54,7 +54,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
+    // --- PERSON A: ROLE-BASED ACCESS LOGIC START ---
+    
+    // 1. Create the base response with user data
+    const response = NextResponse.json(
       {
         id: user._id.toString(),
         name: user.name,
@@ -64,6 +67,20 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
+
+    // 2. Set the 'user_role' cookie that the Middleware Lock requires
+    response.cookies.set('user_role', user.role, {
+      httpOnly: true, // Security: Prevents client-side scripts from stealing the role
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',      // Valid for the entire domain
+      maxAge: 60 * 60 * 24, // 1 day session
+      sameSite: 'lax',
+    });
+
+    return response;
+
+    // --- PERSON A: ROLE-BASED ACCESS LOGIC END ---
+
   } catch (error) {
     console.error("Login error", error);
     return NextResponse.json(
