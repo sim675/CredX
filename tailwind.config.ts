@@ -1,12 +1,21 @@
 import type { Config } from 'tailwindcss'
 
-const config: Config = {
+ const config: Config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#ff7a18',
+          light: '#ff9a42',
+          dark: '#d65c00',
+        },
+        background: '#0a0a0a',
+        card: 'rgba(20,20,20,0.8)',
+      },
       animation: {
         'float-coin': 'float-coin 4s infinite linear',
       },

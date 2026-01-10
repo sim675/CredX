@@ -2,11 +2,6 @@
 
 import type React from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { useRef} from "react"
-
-
-
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,18 +48,13 @@ export default function SignInPage() {
   }
 
   const [showPassword, setShowPassword] = useState(false)
-const cardRef = useRef<HTMLDivElement>(null)
-
-const [glowPos, setGlowPos] = useState({
-  x: 0,
-  y: 0,
-  opacity: 0,
-})
-
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-accent/5 px-4">
-      <Card className="w-full max-w-md border-border/50 shadow-xl backdrop-blur-sm bg-card/80">
+    <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden px-4">
+      <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.65)] -top-40 -left-40" />
+      <div className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.3)] bottom-0 right-0" />
+
+      <Card className="relative z-10 w-full max-w-md border-border/50 shadow-xl backdrop-blur-sm bg-card/80">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <Link href="/" className="flex items-center gap-2">
@@ -130,7 +120,7 @@ const [glowPos, setGlowPos] = useState({
           bg-white/5 border-white/20 text-white
           placeholder:text-white/40
           focus:border-primary/50
-          focus:shadow-[0_0_0_2px_rgba(59,130,246,0.25)]
+          focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)]
         "
       />
     </div>
@@ -156,7 +146,7 @@ const [glowPos, setGlowPos] = useState({
           className="
             pr-10 bg-white/5 border-white/20 text-white
             focus:border-primary/50
-            focus:shadow-[0_0_0_2px_rgba(59,130,246,0.25)]
+            focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)]
           "
         />
 
@@ -207,7 +197,7 @@ const [glowPos, setGlowPos] = useState({
       bg-primary text-primary-foreground
       transition-all duration-300
       hover:scale-[1.02]
-      hover:shadow-[0_0_30px_rgba(59,130,246,0.45)]
+      hover:shadow-[0_0_30px_rgba(255,122,24,0.55)]
       focus-visible:ring-2 focus-visible:ring-primary/50
       disabled:opacity-50 disabled:cursor-not-allowed
     "
