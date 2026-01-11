@@ -11,7 +11,6 @@ import { Wallet, ExternalLink, FileText } from "lucide-react"
 import { fetchInvoicesByMSME, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
