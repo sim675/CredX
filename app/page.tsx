@@ -11,18 +11,11 @@ export default function LandingPage() {
 
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-border/50 backdrop-blur-md sticky top-0 z-50">
-        <Link className="flex items-center justify-center gap-2" href="/">
-          <div className="size-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 
-                          text-primary-foreground font-semibold flex items-center justify-center
-                          shadow-md">
-            IC
-          </div>
-
-          <span className="text-xl font-semibold tracking-tight text-foreground
-                          transition-colors duration-200 hover:text-primary cursor-pointer">
-            InvoChain
+        <Link className="flex items-center justify-center" href="/">
+          <span className="text-4xl font-pirate tracking-tight text-white
+                          transition-colors duration-200 hover:text-primary cursor-pointer font-bold">
+            CredX
           </span>
-
         </Link>
         <nav
           className="ml-auto flex items-center gap-5 sm:gap-7
@@ -273,21 +266,12 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-12 border-t border-border/50 bg-background">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-            <div className="col-span-2 lg:col-span-2 space-y-4">
-              <Link className="flex items-center gap-2" href="/">
-                <div className="bg-primary size-6 rounded flex items-center justify-center text-primary-foreground text-xs font-bold">
-                  IC
-                </div>
-                <span className="font-bold text-lg tracking-tighter">InvoChain</span>
-              </Link>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Empowering MSMEs globally with decentralized finance. Tokenizing the future of business receivables.
-              </p>
+      <footer className="border-t border-border/50 bg-background/40 backdrop-blur-xl">
+        <div className="container px-4 md:px-6 mx-auto py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold uppercase tracking-wider">Social</h4>
               <div className="flex gap-4">
-                <Twitter className="size-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
                 <Linkedin className="size-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
                 <Github className="size-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
               </div>
@@ -309,13 +293,13 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h4 className="text-sm font-bold uppercase tracking-wider">Company</h4>
               <nav className="flex flex-col gap-2">
-                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="/about">
                   About
                 </Link>
-                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="/privacy">
                   Privacy
                 </Link>
-                <Link className="text-sm text-muted-foreground hover:text-primary" href="#">
+                <Link className="text-sm text-muted-foreground hover:text-primary" href="/terms">
                   Terms
                 </Link>
               </nav>
@@ -336,7 +320,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-border/50 text-center">
-            <p className="text-sm text-muted-foreground">© 2025 InvoChain. All rights reserved.</p>
+            <p className="text-sm font-pirate-keg text-muted-foreground">© 2025 CredX. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth, type UserRole } from "@/hooks/use-auth"
-import { Eye, EyeOff, Building2, Landmark, Briefcase, AlertCircle } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Building2, Landmark, Briefcase, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -54,25 +54,28 @@ export default function SignUpPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden py-12 px-4">
-      <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.65)] -top-40 -left-40" />
-      <div className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.3)] bottom-0 right-0" />
+      <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.65)] -top-40 -left-40 animate-pulse" />
+      <div className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.3)] bottom-0 right-0 animate-pulse" style={{ animationDelay: "1s" }} />
 
-      <Card className="relative z-10 w-full max-w-xl border-[rgba(255,122,24,0.2)] shadow-xl backdrop-blur-sm bg-[rgba(20,20,20,0.85)] text-white">
+      <Card className="relative z-10 w-full max-w-xl border border-white/10 shadow-2xl backdrop-blur-xl bg-white/5 text-white">
+        <Link 
+          href="/auth/signin" 
+          className="absolute left-6 top-6 text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="size-6" /> 
+        </Link>
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="size-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-semibold flex items-center justify-center shadow-md">
-                IC
-              </div>
-              <span className="text-xl font-semibold tracking-tight transition-colors duration-200 cursor-pointer hover:text-primary">
-                InvoChain
-              </span>
-            </Link>
+          <div className="flex flex-col items-center text-center">
+            <span className="text-7xl font-kroftsmann tracking-widest leading-none mb-0 text-white font-bold">
+              Sign Up
+            </span>
+            <p className="text-lg text-white/90 font-serif mt-2">
+              Create an account
+            </p>
+            <p className="text-sm text-white/60 mt-1">
+              Join the decentralized invoice financing marketplace
+            </p>
           </div>
-          <CardTitle className="text-2xl text-center">Create an account</CardTitle>
-          <CardDescription className="text-center text-white/70">
-            Join the decentralized invoice financing marketplace
-          </CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
@@ -97,7 +100,7 @@ export default function SignUpPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)]"
+                    className="bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)] backdrop-blur-sm"
                   />
                 </div>
 
@@ -109,7 +112,7 @@ export default function SignUpPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)]"
+                    className="bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)] backdrop-blur-sm"
                   />
                 </div>
               </div>
@@ -123,7 +126,7 @@ export default function SignUpPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10 bg-white/5 border-white/20 text-white focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)]"
+                    className="pr-10 bg-white/5 border border-white/10 text-white focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)] backdrop-blur-sm"
                   />
                   <button
                     type="button"
@@ -151,7 +154,7 @@ export default function SignUpPage() {
                       <RadioGroupItem value={opt.id} id={opt.id} className="peer sr-only" />
                       <Label
                         htmlFor={opt.id}
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-white/10 bg-black/20 p-4 hover:bg-black/30 hover:text-white peer-data-[state=checked]:border-[#ff7a18] cursor-pointer transition-all"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-white/10 bg-white/5 p-4 hover:bg-white/10 hover:text-white peer-data-[state=checked]:border-[#ff7a18] cursor-pointer transition-all backdrop-blur-sm"
                       >
                         {opt.icon}
                         <span className="font-bold">{opt.text}</span>

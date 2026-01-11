@@ -17,8 +17,8 @@ export default function PrivacyPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              At InvoChain, we take your privacy seriously. We follow a privacy-by-design approach, 
-              collecting only the information necessary to provide and improve our services while 
+              At CredX, we take your privacy seriously. We follow a privacy-by-design approach, 
+              collecting only information necessary to provide and improve our services while 
               maintaining the highest standards of data protection.
             </p>
           </CardContent>
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              Transactions on InvoChain are recorded on the blockchain, which is a public ledger. This means:
+              Transactions on CredX are recorded on blockchain, which is a public ledger. This means:
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Transaction details are visible to anyone with access to the blockchain</li>

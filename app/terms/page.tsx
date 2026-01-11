@@ -17,7 +17,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent>
             <p>
-              By accessing or using the InvoChain platform ("Platform"), you agree to be bound by these 
+              By accessing or using CredX platform ("Platform"), you agree to be bound by these 
               Terms and Conditions ("Terms"). If you do not agree with any part of these Terms, you must 
               not use our Platform.
             </p>
@@ -30,7 +30,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              InvoChain is a technology platform that connects MSMEs with investors for invoice financing 
+              CredX is a technology platform that connects MSMEs with investors for invoice financing 
               using blockchain technology. Please note that:
             </p>
             <ul className="list-disc pl-5 space-y-2">
@@ -47,7 +47,7 @@ export default function TermsPage() {
             <CardTitle>User Responsibilities</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p>By using InvoChain, you agree to:</p>
+            <p>By using CredX, you agree to:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Provide accurate and complete information</li>
               <li>Maintain the security of your account credentials</li>
@@ -65,7 +65,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="font-medium">
-              Using InvoChain involves certain risks that you should understand:
+              Using CredX involves certain risks that you should understand:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -93,7 +93,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">
-              InvoChain makes no representations, warranties, or guarantees regarding:
+              CredX makes no representations, warranties, or guarantees regarding:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>The accuracy or completeness of any information on the Platform</li>
@@ -110,7 +110,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              To the maximum extent permitted by law, InvoChain and its affiliates shall not be liable for:
+              To the maximum extent permitted by law, CredX and its affiliates shall not be liable for:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Any direct, indirect, incidental, or consequential damages</li>

@@ -1,6 +1,31 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'PirateKeg';
+  src: url('/fonts/pirate-keg.regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kroftsmann';
+  src: url('/fonts/kroftsmann.regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Create utility classes for Tailwind */
+@layer utilities {
+  .font-pirate {
+    font-family: 'PirateKeg', cursive;
+  }
+  
+  .font-kroftsmann {
+    font-family: 'Kroftsmann', cursive;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
