@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Clock, Landmark, FileText, Wallet, ArrowRight, ExternalLink } from "lucide-react"
+import { Search, Clock, Landmark, FileText, Wallet, ArrowRight, ExternalLink, Loader2 } from "lucide-react"
 import { 
   fetchFundraisingInvoices, 
   Invoice, 
@@ -38,6 +38,10 @@ export default function InvoiceMarketplace() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState("")
+  
+  // PERSON A: State for transaction reliability
+  const [pendingTxId, setPendingTxId] = useState<string | null>(null)
+  
   const [filters, setFilters] = useState<FilterState>({
     yieldRanges: [],
     durationRanges: [],
@@ -67,14 +71,26 @@ export default function InvoiceMarketplace() {
     loadInvoices()
   }, [toast])
 
+  
+
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters)
   }
 
+  //FIXED: Accepts string or number to prevent TS(2345)
+  const handleInvestInitiation = (id: string | number) => {
+    setPendingTxId(id.toString())
+    toast({
+      title: "Preparing Transaction",
+      description: "Setting up your investment for Invoice #" + id,
+    })
+  }
+
+  
+
   const filteredAndSortedInvoices = useMemo(() => {
     let result = [...invoices]
 
-    // Apply search filter
     if (search) {
       const searchLower = search.toLowerCase()
       result = result.filter(inv => 
@@ -84,7 +100,6 @@ export default function InvoiceMarketplace() {
       )
     }
 
-    // Apply yield filter
     if (filters.yieldRanges.length > 0) {
       result = result.filter(inv => {
         const yieldValue = parseFloat(inv.interestRate) || 0
@@ -97,7 +112,6 @@ export default function InvoiceMarketplace() {
       })
     }
 
-    // Apply duration filter
     if (filters.durationRanges.length > 0) {
       result = result.filter(inv => {
         const dueDate = new Date(inv.dueDate)
@@ -113,12 +127,10 @@ export default function InvoiceMarketplace() {
       })
     }
 
-    // Apply verified buyer filter
     if (filters.verifiedBuyer) {
       result = result.filter(inv => inv.buyerVerified)
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       switch (filters.sortBy) {
         case 'yield':
@@ -126,7 +138,6 @@ export default function InvoiceMarketplace() {
         case 'dueDate':
           return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         case 'risk':
-          // Assuming lower risk score is better
           return (a.riskScore || 0) - (b.riskScore || 0)
         default:
           return 0
@@ -175,7 +186,7 @@ export default function InvoiceMarketplace() {
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="border-border/50 hover:border-primary/50 transition-colors">
+            <Card key={i} className="border-border/50">
               <CardHeader>
                 <Skeleton className="h-6 w-32 mb-2" />
                 <Skeleton className="h-4 w-24" />
@@ -187,14 +198,12 @@ export default function InvoiceMarketplace() {
           ))}
         </div>
       ) : filteredAndSortedInvoices.length === 0 ? (
-        <Card className="border-border/50">
-          <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
-            <FileText className="h-12 w-12 text-muted-foreground" />
+        <Card className="border-border/50 text-center py-12">
+          <CardContent className="space-y-4">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="text-lg font-medium">No invoices available</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-md">
-              {search
-                ? "No invoices match your search criteria."
-                : "There are currently no invoices available for investment. Check back later."}
+            <p className="text-sm text-muted-foreground">
+              {search ? "No invoices match your search." : "Check back later for new opportunities."}
             </p>
           </CardContent>
         </Card>
@@ -204,10 +213,13 @@ export default function InvoiceMarketplace() {
             const daysRemaining = calculateDaysRemaining(invoice.dueDate)
             const fundingProgress = parseFloat(invoice.fundedAmount) / parseFloat(invoice.amount)
             const progressPercent = Math.min(fundingProgress * 100, 100)
+            
+            // FIXED: Ensuring comparison of string to string to solve TS(2367)
+            const isThisPending = pendingTxId === invoice.id.toString()
 
             return (
               <Card
-                key={invoice.id}
+                key={invoice.id.toString()}
                 className="border-border/50 bg-card/50 hover:border-primary/50 transition-colors group"
               >
                 <CardHeader className="pb-4">
@@ -264,10 +276,8 @@ export default function InvoiceMarketplace() {
                         <Landmark className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Buyer:</span>
                         <span>{formatAddress(invoice.buyer)}</span>
-                        {(invoice as any).buyerVerified && (
-                          <Badge variant="outline" className="text-xs h-5 px-1.5">
-                            Verified
-                          </Badge>
+                        {invoice.buyerVerified && (
+                          <Badge variant="outline" className="text-xs h-5 px-1.5">Verified</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -281,29 +291,33 @@ export default function InvoiceMarketplace() {
                       variant="outline"
                       asChild
                       className="w-full"
-                      title="Opens the original invoice uploaded by the MSME for verification"
                     >
-                      <a 
-                        href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2"
-                      >
-                        <FileText className="size-3.5" />
+                      <a href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`} target="_blank" rel="noreferrer">
+                        <FileText className="size-3.5 mr-2" />
                         View Original Invoice
-                        <ExternalLink className="size-3" />
                       </a>
                     </Button>
                   </div>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button className="w-full group-hover:bg-primary/90 transition-colors" asChild>
-                    <Link 
-                      href={`/dashboard/investor/invest/${invoice.id}`} 
-                      className="flex items-center justify-center gap-2"
-                    >
-                      Invest Now <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
+                  <Button 
+                    className="w-full group-hover:bg-primary/90 transition-colors" 
+                    disabled={isThisPending}
+                    asChild={!isThisPending}
+                    onClick={() => handleInvestInitiation(invoice.id)}
+                  >
+                    {isThisPending ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Processing...
+                      </span>
+                    ) : (
+                      <Link 
+                        href={`/dashboard/investor/invest/${invoice.id}`} 
+                        className="flex items-center justify-center gap-2"
+                      >
+                        Invest Now <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>

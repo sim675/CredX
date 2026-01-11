@@ -6,6 +6,10 @@ import type { PublicClient } from "viem";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string;
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology";
 
+// PERSON A: Added missing exports for UI Filters
+export type YieldRange = 'low' | 'medium' | 'high';
+export type DurationRange = 'short' | 'medium' | 'long';
+
 export interface Invoice {
   id: number;
   msme: string;
@@ -15,7 +19,10 @@ export interface Invoice {
   dueDate: Date;
   status: number; // 1: Fundraising, 2: Funded, 3: Repaid, 4: Defaulted
   metadataURI: string;
-  discountRate?: string; // Added for future use
+  interestRate: string; // PERSON A: Added to match UI page.tsx expectations
+  buyerVerified: boolean; // PERSON A: Added for UI badges
+  riskScore: number;      // PERSON A: Added for UI sorting
+  discountRate?: string; 
 }
 
 export type InvoiceStatus = "Fundraising" | "Funded" | "Repaid" | "Defaulted";
@@ -75,6 +82,10 @@ export async function fetchAllInvoices(): Promise<Invoice[]> {
         dueDate: new Date(Number(inv.dueDate) * 1000),
         status: Number(inv.status),
         metadataURI: inv.metadataURI,
+        // Mapping discountRate to interestRate for UI consistency
+        interestRate: inv.discountRate ? (Number(inv.discountRate) / 100).toString() : "10", 
+        buyerVerified: true, // Mocking true for UI display; update if contract has this
+        riskScore: 50,       // Mocking middle risk; update if contract has this
         discountRate: inv.discountRate ? ethers.formatUnits(inv.discountRate, 18) : undefined,
       }))
       .sort((a, b) => b.id - a.id);
