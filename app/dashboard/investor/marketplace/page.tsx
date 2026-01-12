@@ -281,10 +281,10 @@ export default function InvoiceMarketplace() {
                       variant="outline"
                       asChild
                       className="w-full"
-                      title="Opens the original invoice uploaded by the MSME for verification"
+                      title="View detailed invoice information and the uploaded PDF"
                     >
-                      <a 
-                        href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
+                      <Link
+                        href={`/dashboard/investor/marketplace/${invoice.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2"
@@ -292,7 +292,7 @@ export default function InvoiceMarketplace() {
                         <FileText className="size-3.5" />
                         View Original Invoice
                         <ExternalLink className="size-3" />
-                      </a>
+                      </Link>
                     </Button>
                   </div>
                 </CardContent>
