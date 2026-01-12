@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-// <CHANGE> Replaced "admin" with "bigbuyer" role
 export type UserRole = "msme" | "investor" | "bigbuyer"
 
 interface User {
@@ -31,21 +30,30 @@ export function useAuth() {
     setUser(userData)
     localStorage.setItem("invochain_user", JSON.stringify(userData))
 
-    // Redirect to wallet connection if wallet not bound
+    // 1. Redirect to wallet connection if wallet not bound
     if (!userData.walletAddress) {
       router.push("/connect-wallet")
       return
     }
 
-    // <CHANGE> Updated routing to use bigbuyer instead of admin
-    if (userData.role === "msme") router.push("/dashboard/msme")
-    else if (userData.role === "investor") router.push("/dashboard/investor")
-    else if (userData.role === "bigbuyer") router.push("/dashboard/bigbuyer")
+    // 2. Routing based on role
+    if (userData.role === "msme") {
+      router.push("/dashboard/msme")
+    } else if (userData.role === "investor") {
+      router.push("/dashboard/investor")
+    } else if (userData.role === "bigbuyer") {
+      router.push("/dashboard/bigbuyer")
+    }
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem("invochain_user")
+    
+    // --- THE FIX: Clear the Middleware Cookie ---
+    // We set the expiration to a date in the past to delete it
+    document.cookie = "user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    
     router.push("/")
   }
 

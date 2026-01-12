@@ -2,7 +2,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,7 +43,17 @@ export default function SignUpPage() {
         throw new Error(data.error || "Signup failed")
       }
 
-      login(data)
+      // --- MIDDLEWARE FIX: SET COOKIE MANUALLY ---
+      // This ensures the middleware sees the role before the redirect happens
+      const date = new Date();
+      date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+      document.cookie = `user_role=${role}; expires=${date.toUTCString()}; path=/`;
+
+      // Small delay to ensure browser storage is committed
+      setTimeout(() => {
+        login(data)
+      }, 50);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
     } finally {
@@ -54,6 +63,7 @@ export default function SignUpPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden py-12 px-4">
+      {/* Background Orbs */}
       <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.65)] -top-40 -left-40 animate-pulse" />
       <div className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.3)] bottom-0 right-0 animate-pulse" style={{ animationDelay: "1s" }} />
 
@@ -64,6 +74,7 @@ export default function SignUpPage() {
         >
           <ArrowLeft className="size-6" /> 
         </Link>
+        
         <CardHeader className="space-y-1">
           <div className="flex flex-col items-center text-center">
             <span className="text-7xl font-kroftsmann tracking-widest leading-none mb-0 text-white font-bold">
