@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { useAccount, useWalletClient } from "wagmi"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -199,144 +200,159 @@ export default function BigBuyerOutstandingPage() {
     )
   }
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Outstanding Invoices</h2>
-        <p className="text-muted-foreground">View and pay invoices owed to MSMEs</p>
-      </div>
+    <div className="min-h-screen bg-[#050505] relative overflow-hidden text-white">
+      <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#FF4D00] opacity-[0.08] blur-[120px]" />
+      <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-[#FF8A00] opacity-[0.05] blur-[100px]" />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOutstanding.toFixed(2)} MATIC</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
-            </p>
-          </CardContent>
-        </Card>
+      <main className="relative z-10 p-6 space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
+            Outstanding Invoices
+          </h1>
+          <p className="text-gray-400 mt-2">View and pay invoices owed to MSMEs</p>
+        </div>
 
-        <Card className="border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Fundraising</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {invoices.filter((inv) => inv.status === 1).length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting funding</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Funded</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {invoices.filter((inv) => inv.status === 2).length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Ready to repay</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Invoices Awaiting Payment</CardTitle>
-          <CardDescription>
-            Total outstanding: {totalOutstanding.toFixed(2)} MATIC across {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <FileText className="h-12 w-12 text-muted-foreground" />
-              <h3 className="text-lg font-medium">No outstanding invoices</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-md">
-                You don't have any invoices that require payment.
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-400">Total Outstanding</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-extrabold text-white">{totalOutstanding.toFixed(2)} MATIC</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
               </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>MSME Address</TableHead>
-                  <TableHead className="text-right">Invoice Amount</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-center">Days Remaining</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => {
-                  const daysRemaining = calculateDaysRemaining(invoice.dueDate)
-                  const statusLabel = getStatusLabel(invoice.status)
-                  const isLate = daysRemaining < 0 && invoice.status === 2
-                  const canRepay = invoice.status === 2
+            </CardContent>
+          </Card>
 
-                  return (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium font-mono text-xs">#{invoice.id}</TableCell>
-                      <TableCell className="font-mono text-xs">{formatAddress(invoice.msme)}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {parseFloat(invoice.amount).toFixed(2)} MATIC
-                      </TableCell>
-                      <TableCell>{invoice.dueDate.toLocaleDateString()}</TableCell>
-                      <TableCell className="text-center">
-                        <span className={isLate ? "text-red-500 font-semibold" : ""}>
-                          {daysRemaining}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={isLate ? "destructive" : statusLabel === "Funded" ? "default" : "outline"}>
-                          {isLate ? "Late" : statusLabel}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                            title="Opens the original invoice uploaded by the MSME for verification"
-                          >
-                            <a 
-                              href={getInvoiceDocumentUrl(invoice)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1"
-                            >
-                              <FileText className="size-3" />
-                              View
-                              <ExternalLink className="size-2.5" />
-                            </a>
-                          </Button>
-                          {canRepay && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleRepay(invoice.id)}
-                              disabled={repaying === invoice.id}
-                            >
-                              <CreditCard className="size-3 mr-1" />
-                              {repaying === invoice.id ? "Repaying..." : "Repay"}
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-400">Fundraising</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-extrabold text-white">
+                {invoices.filter((inv) => inv.status === 1).length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Awaiting funding</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-400">Funded</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-extrabold text-white">
+                {invoices.filter((inv) => inv.status === 2).length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Ready to repay</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-[#FFD600]" />
+              <span className="text-orange-400 font-bold">Invoices Awaiting Payment</span>
+            </CardTitle>
+            <CardDescription className="text-orange-300">
+              Total outstanding: {totalOutstanding.toFixed(2)} MATIC across {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {invoices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <FileText className="h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-medium">No outstanding invoices</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  You don't have any invoices that require payment.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-orange-500/10 bg-black/20 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-orange-500/20">
+                      <TableHead className="text-orange-300">Invoice ID</TableHead>
+                      <TableHead className="text-orange-300">MSME Address</TableHead>
+                      <TableHead className="text-orange-300 text-right">Invoice Amount</TableHead>
+                      <TableHead className="text-orange-300">Due Date</TableHead>
+                      <TableHead className="text-orange-300 text-center">Days Remaining</TableHead>
+                      <TableHead className="text-orange-300 text-center">Status</TableHead>
+                      <TableHead className="text-orange-300 text-right">Actions</TableHead>
                     </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => {
+                      const daysRemaining = calculateDaysRemaining(invoice.dueDate)
+                      const statusLabel = getStatusLabel(invoice.status)
+                      const isLate = daysRemaining < 0 && invoice.status === 2
+                      const canRepay = invoice.status === 2
+
+                      return (
+                        <TableRow key={invoice.id} className="border-b border-orange-500/10 hover:bg-black/30 transition-colors">
+                          <TableCell className="font-medium font-mono text-xs text-white">#{invoice.id}</TableCell>
+                          <TableCell className="font-mono text-xs text-orange-200">{formatAddress(invoice.msme)}</TableCell>
+                          <TableCell className="text-right font-semibold text-white">
+                            {parseFloat(invoice.amount).toFixed(2)} MATIC
+                          </TableCell>
+                          <TableCell className="text-orange-200">{invoice.dueDate.toLocaleDateString()}</TableCell>
+                          <TableCell className="text-center">
+                            <span className={isLate ? "text-red-400 font-semibold" : "text-orange-300"}>
+                              {daysRemaining}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={isLate ? "destructive" : statusLabel === "Funded" ? "default" : "outline"} 
+                                   className={`${isLate ? 'animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]' : ''}`}>
+                              {isLate ? "Late" : statusLabel}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                title="Opens the original invoice uploaded by MSME for verification"
+                                className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                              >
+                                <a 
+                                  href={getInvoiceDocumentUrl(invoice)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1"
+                                >
+                                  <FileText className="size-3" />
+                                  View
+                                  <ExternalLink className="size-2.5" />
+                                </a>
+                              </Button>
+                              {canRepay && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleRepay(invoice.id)}
+                                  disabled={repaying === invoice.id}
+                                  className="shadow-[0_0_10px_rgba(255,138,0,0.3)] hover:shadow-[0_0_15px_rgba(255,138,0,0.5)]"
+                                >
+                                  <CreditCard className="size-3 mr-1" />
+                                  {repaying === invoice.id ? "Repaying..." : "Repay"}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }

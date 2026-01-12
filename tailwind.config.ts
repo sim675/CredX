@@ -18,6 +18,7 @@ import type { Config } from 'tailwindcss'
       },
       animation: {
         'float-coin': 'float-coin 4s infinite linear',
+        'pulse-fire': 'pulse-fire 3s infinite ease-in-out',
       },
       keyframes: {
         'float-coin': {
@@ -35,11 +36,20 @@ import type { Config } from 'tailwindcss'
           },
           '80%': {
             transform: 'translateY(-70px) translateX(-6px) rotate(-6deg) scale(1.05)',
+            filter: 'drop-shadow(0 0 30px rgba(250,204,21,1))',
           },
           '100%': {
             transform: 'translateY(-95px) translateX(0) rotate(0deg) scale(1.08)',
             opacity: '0',
-            filter: 'drop-shadow(0 0 30px rgba(250,204,21,1))',
+            filter: 'drop-shadow(0 0 40px rgba(250,204,21,1))',
+          },
+        },
+        'pulse-fire': {
+          '0%, 100%': {
+            filter: 'drop-shadow(0 0 5px rgba(255, 77, 0, 0.6))',
+          },
+          '50%': {
+            filter: 'drop-shadow(0 0 20px rgba(255, 77, 0, 0.8))',
           },
         },
       },
