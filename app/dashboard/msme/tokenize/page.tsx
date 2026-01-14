@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Info, Loader2, UploadCloud, FileText, X } from "lucide-react"
+import { Info, Loader2, UploadCloud, FileText, X, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
@@ -17,6 +17,8 @@ type InvoiceFormState = {
   dueDate: string
   discountRate: string
   metadataURI: string
+  visibility: "public" | "private"
+  exclusiveInvestor: string
 }
 
 export default function TokenizeInvoice() {
@@ -36,22 +38,20 @@ export default function TokenizeInvoice() {
   const [txHash, setTxHash] = useState<string | null>(null)
   const AMOY_EXPLORER_BASE_URL = "https://amoy.polygonscan.com"
   
-  // --- New State for File Upload ---
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // -------------------------------
-
   const [formData, setFormData] = useState<InvoiceFormState>({
     buyerAddress: "",
     amount: "",
     dueDate: "",
     discountRate: "",
-    metadataURI: ""
+    metadataURI: "",
+    visibility: "public",
+    exclusiveInvestor: "",
   })
 
-  // --- File Upload Handlers ---
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(true)
@@ -70,7 +70,6 @@ export default function TokenizeInvoice() {
       const droppedFile = e.dataTransfer.files[0]
       if (droppedFile.type === "application/pdf") {
         setFile(droppedFile)
-        // Auto-fill description with filename if empty
         setFormData(prev => ({ 
             ...prev, 
             metadataURI: prev.metadataURI || `Invoice: ${droppedFile.name}` 
@@ -86,307 +85,149 @@ export default function TokenizeInvoice() {
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files
-  if (!files || !files[0]) {
-    return
+    const files = e.target.files
+    if (!files || !files[0]) return
+    const selectedFile = files[0]
+    setFile(selectedFile)
+    setFormData(prev => ({ 
+        ...prev, 
+        metadataURI: prev.metadataURI || `Invoice: ${selectedFile.name}` 
+    }))
   }
-
-  const selectedFile = files[0]
-  setFile(selectedFile)
-  // Auto-fill description with filename if empty
-  setFormData(prev => ({ 
-    ...prev, 
-    metadataURI: prev.metadataURI || `Invoice: ${selectedFile.name}` 
-  }))
-}
 
   const removeFile = () => {
     setFile(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
   }
-  // ---------------------------
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!file) {
-      toast({
-        title: "Missing Invoice",
-        description: "Please upload the actual invoice PDF.",
-        variant: "destructive"
-      })
+      toast({ title: "Missing Invoice", description: "Please upload the actual invoice PDF.", variant: "destructive" })
       return
     }
 
-    // Basic client-side validation to avoid on-chain reverts
-    if (!formData.buyerAddress || !/^0x[a-fA-F0-9]{40}$/.test(formData.buyerAddress)) {
-      toast({
-        title: "Invalid buyer address",
-        description: "Please enter a valid buyer wallet address.",
-        variant: "destructive"
-      })
+    if (!ethers.isAddress(formData.buyerAddress)) {
+      toast({ title: "Invalid buyer address", description: "Please enter a valid wallet address.", variant: "destructive" })
       return
     }
 
-    const amountNumber = Number(formData.amount)
-    if (!amountNumber || amountNumber <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Amount must be greater than 0.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    const discountRateNumber = Number(formData.discountRate)
-    if (Number.isNaN(discountRateNumber) || discountRateNumber < 0 || discountRateNumber > 100) {
-      toast({
-        title: "Invalid discount rate",
-        description: "Discount rate must be between 0% and 100%.",
-        variant: "destructive"
-      })
+    const amountInWei = ethers.parseEther(formData.amount || "0")
+    if (amountInWei <= 0n) {
+      toast({ title: "Invalid amount", description: "Amount must be greater than 0.", variant: "destructive" })
       return
     }
 
     const selectedDate = new Date(formData.dueDate)
-    if (Number.isNaN(selectedDate.getTime())) {
-      toast({
-        title: "Invalid due date",
-        description: "Please select a valid due date in the future.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    // Treat the chosen date as end-of-day to ensure it is strictly in the future
-    const dueDateTimestamp = Math.floor(selectedDate.getTime() / 1000) + 24 * 60 * 60 - 1
-    const nowTimestamp = Math.floor(Date.now() / 1000)
-
-    if (dueDateTimestamp <= nowTimestamp) {
-      toast({
-        title: "Due date too soon",
-        description: "Due date must be strictly in the future (not earlier today).",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (!window.ethereum) {
-      toast({
-        title: "Error",
-        description: "Please install MetaMask to continue.",
-        variant: "destructive"
-      })
+    const dueDateTimestamp = Math.floor(selectedDate.getTime() / 1000)
+    if (dueDateTimestamp <= Math.floor(Date.now() / 1000)) {
+      toast({ title: "Invalid Date", description: "Due date must be in the future.", variant: "destructive" })
       return
     }
 
     try {
       setIsSubmitting(true)
-      setTxHash(null)
       setTxStatus("ipfs")
 
-      // Connect to MetaMask
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const network = await provider.getNetwork()
-      
-      // Check if connected to Polygon Amoy (chainId: 80002)
-      if (network.chainId.toString() !== "80002") {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x13882" }],
-          })
-        } catch (switchError: any) {
-          toast({
-            title: "Wrong Network",
-            description: "Please switch to Polygon Amoy Testnet in MetaMask and try again.",
-            variant: "destructive",
-          })
-          return
-        }
-      }
-      
-      const msmeAddress = await signer.getAddress()
-
+      // 1. Prepare IPFS Data with ALL fields to avoid "Validation failed" error
       const ipfsFormData = new FormData()
       ipfsFormData.append("file", file)
       ipfsFormData.append("buyerAddress", formData.buyerAddress)
-      ipfsFormData.append("msmeAddress", msmeAddress)
       ipfsFormData.append("amount", formData.amount)
       ipfsFormData.append("dueDate", formData.dueDate)
-      ipfsFormData.append("currency", "MATIC")
       ipfsFormData.append("discountRate", formData.discountRate)
-      if (formData.metadataURI) {
-        ipfsFormData.append("description", formData.metadataURI)
-      }
-
-      const ipfsResponse = await fetch("/api/invoices/ipfs", {
-        method: "POST",
-        body: ipfsFormData,
-      })
-
-      const ipfsJson = await ipfsResponse.json().catch(() => null as any)
-
-      if (!ipfsResponse.ok) {
-        const message = (ipfsJson && ipfsJson.error) || "Failed to upload invoice to IPFS"
-        throw new Error(message)
-      }
-
-      const metadataUri: string | undefined = ipfsJson?.metadataUri
-
-      if (!metadataUri) {
-        throw new Error("IPFS upload did not return metadata URI")
-      }
+      ipfsFormData.append("description", formData.metadataURI || `Invoice from ${formData.buyerAddress}`)
       
-      // Get contract instance
-      const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
-      if (!contractAddress) {
-        throw new Error("Contract address not configured")
+      const exclusiveInv = formData.visibility === "public" ? ethers.ZeroAddress : formData.exclusiveInvestor
+      ipfsFormData.append("exclusiveInvestor", exclusiveInv)
+
+      // 2. Upload to IPFS API
+      const ipfsResponse = await fetch("/api/invoices/ipfs", { 
+        method: "POST", 
+        body: ipfsFormData 
+      })
+      
+      const ipfsJson = await ipfsResponse.json()
+      if (!ipfsResponse.ok) {
+        throw new Error(ipfsJson.error || ipfsJson.details || "IPFS upload failed")
       }
+
+      const metadataUri = ipfsJson.metadataUri
+
+      // 3. Blockchain Transaction
+      const provider = new ethers.BrowserProvider(window.ethereum as any)
+      const signer = await provider.getSigner()
+      const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string
       
       const contract = new ethers.Contract(
         contractAddress,
         InvoiceMarketplaceABI.abi,
         signer
       )
-      
-      // Convert values
-      const amountInWei = ethers.parseEther(formData.amount)
-      const discountRateBps = Math.floor(discountRateNumber * 100)
-      
-      // Call the contract
+
+      const discountRateBps = Math.floor(Number(formData.discountRate) * 100)
+
       setTxStatus("awaiting_signature")
+      
       const tx = await contract.createInvoice(
         formData.buyerAddress,
         amountInWei,
         dueDateTimestamp,
         discountRateBps,
-        metadataUri 
+        metadataUri,
+        exclusiveInv
       )
+
       setTxHash(tx.hash)
       setTxStatus("pending")
-
-      toast({
-        title: "Transaction Submitted",
-        description: "Waiting for confirmation on Polygon Amoy. This may take a little longer on testnets.",
-      })
-
-      const TX_TIMEOUT_MS = 120000
-
-      let receiptOrTimeout: any
-      try {
-        receiptOrTimeout = await Promise.race([
-          tx.wait(),
-          new Promise<"timeout">((resolve) =>
-            setTimeout(() => resolve("timeout"), TX_TIMEOUT_MS)
-          ),
-        ])
-      } catch (waitError: any) {
-        console.error("Error while waiting for transaction:", waitError)
-        throw waitError
-      }
-
-      if (receiptOrTimeout === "timeout") {
-        setTxStatus("timeout")
-
-        toast({
-          title: "Transaction Pending",
-          description:
-            "Your transaction was submitted but is taking longer than expected to confirm. You can keep this tab open or track it in the block explorer.",
-        })
-
-        return
-      }
-
-      setTxStatus("confirming")
-
-      toast({
-        title: "Transaction Mined",
-        description: "Waiting for network synchronization...",
-      })
-
-      // 2. Add an artificial delay (3-5 seconds) to allow RPC nodes to sync
-      // Polygon Amoy is a testnet and can be slower than Mainnet
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await tx.wait()
       
       setTxStatus("success")
+      toast({ title: "Success!", description: "Invoice tokenized successfully." })
+      
+      setTimeout(() => {
+        router.refresh()
+        router.push("/dashboard/msme/active")
+      }, 3000)
 
-      toast({
-        title: "Success!",
-        description: "Invoice created successfully on the blockchain.",
-      })
-      router.refresh();
-      
-      router.push("/dashboard/msme/active")
-      
     } catch (error: any) {
-      console.error("Error creating invoice:", error)
+      console.error("Submission error:", error)
       setTxStatus("error")
-      
-      let errorMessage = "Failed to create invoice"
-
-      if (error.code === 4001) {
-        errorMessage = "Transaction was rejected"
-      } else {
-        const rawMessage = typeof error.message === "string" ? error.message : ""
-
-        if (rawMessage && rawMessage.toLowerCase().includes("insufficient funds")) {
-          errorMessage = "Insufficient funds for transaction"
-        } else if (
-          error.code === "NETWORK_ERROR" ||
-          (rawMessage &&
-            (rawMessage.toLowerCase().includes("could not connect") ||
-              rawMessage.toLowerCase().includes("timeout") ||
-              rawMessage.toLowerCase().includes("failed to fetch")))
-        ) {
-          errorMessage =
-            "Network or RPC error. Your current RPC endpoint may be slow or unavailable. Please try again or switch to a different RPC in MetaMask."
-        } else {
-          const reasonMatch =
-            rawMessage.match(/reason:\"([^\"]*)\"/) ||
-            rawMessage.match(/reverted with reason string '([^']*)'/) ||
-            []
-
-          if (reasonMatch[1]) {
-            errorMessage = reasonMatch[1]
-          } else {
-            const nestedMessage =
-              error?.info?.error?.message ||
-              error?.error?.message ||
-              error?.shortMessage ||
-              ""
-
-            if (nestedMessage) {
-              errorMessage = nestedMessage
-            } else if (rawMessage && rawMessage.includes("Internal JSON-RPC error")) {
-              errorMessage =
-                "Transaction failed on-chain. Please double-check the buyer address, amount, and due date (must be in the future), then try again."
-            } else if (rawMessage) {
-              errorMessage = rawMessage
-            }
-          }
-        }
-      }
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
+      toast({ 
+        title: "Error", 
+        description: error.message || "An unexpected error occurred", 
+        variant: "destructive" 
       })
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (txStatus === "success") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in zoom-in duration-300">
+        <div className="bg-primary/10 p-6 rounded-full">
+          <CheckCircle2 className="w-16 h-16 text-primary" />
+        </div>
+        <h1 className="text-3xl font-bold">Invoice Tokenized!</h1>
+        <p className="text-muted-foreground text-center max-w-sm">
+          Your invoice has been successfully recorded on the Polygon Amoy blockchain.
+        </p>
+        {txHash && (
+          <Button variant="outline" asChild>
+            <a href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
+              View on Explorer
+            </a>
+          </Button>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -401,11 +242,9 @@ export default function TokenizeInvoice() {
           <Card className="border-border/50 bg-card/50">
             <CardHeader>
               <CardTitle className="text-lg">Invoice Details</CardTitle>
-              <CardDescription>Enter the details of the invoice you want to tokenize.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               
-              {/* --- IPFS File Uploader Section --- */}
               <div className="space-y-2">
                 <Label>Upload Invoice (PDF)</Label>
                 {!file ? (
@@ -414,201 +253,77 @@ export default function TokenizeInvoice() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`
-                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                      flex flex-col items-center justify-center gap-2
-                      ${isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 hover:bg-muted/50"}
-                    `}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 hover:bg-muted/50"}`}
                   >
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="application/pdf"
-                      onChange={handleFileInput}
-                    />
-                    <div className="p-3 rounded-full bg-background border shadow-sm">
-                        <UploadCloud className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground">PDF (max 10MB)</p>
-                    </div>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileInput} />
+                    <UploadCloud className="w-8 h-8 text-primary" />
+                    <p className="text-sm font-medium">Click to upload or drag and drop</p>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-primary/10 text-primary">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium text-foreground">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
+                      <FileText className="w-5 h-5 text-primary" />
+                      <p className="text-sm font-medium">{file.name}</p>
                     </div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={removeFile}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="w-5 h-5" />
-                    </Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={removeFile}><X className="w-4 h-4" /></Button>
                   </div>
                 )}
-              </div>
-              {/* ---------------------------------- */}
-
-              <div className="space-y-2">
-                <Label htmlFor="buyerAddress">Buyer's Wallet Address</Label>
-                <Input 
-                  id="buyerAddress" 
-                  name="buyerAddress"
-                  value={formData.buyerAddress}
-                  onChange={handleChange}
-                  placeholder="0x..." 
-                  required 
-                  className="font-mono bg-background/50"
-                />
-                <p className="text-xs text-muted-foreground">The buyer's wallet address that will be responsible for repayment</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (MATIC)</Label>
-                  <Input 
-                    id="amount" 
-                    name="amount"
-                    type="number" 
-                    step="0.000000000000000001"
-                    min="0"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    placeholder="1.0" 
-                    required 
-                    className="bg-background/50"
-                  />
+                  <Label>Visibility</Label>
+                  <div className="flex gap-2">
+                    <Button type="button" variant={formData.visibility === "public" ? "default" : "outline"} onClick={() => setFormData(p => ({...p, visibility: "public"}))}>Public</Button>
+                    <Button type="button" variant={formData.visibility === "private" ? "default" : "outline"} onClick={() => setFormData(p => ({...p, visibility: "private"}))}>Private</Button>
+                  </div>
+                </div>
+                {formData.visibility === "private" && (
+                  <div className="space-y-2">
+                    <Label>Exclusive Investor Wallet</Label>
+                    <Input name="exclusiveInvestor" value={formData.exclusiveInvestor} onChange={handleChange} placeholder="0x..." />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Buyer's Wallet Address</Label>
+                <Input name="buyerAddress" value={formData.buyerAddress} onChange={handleChange} placeholder="0x..." required />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Amount (MATIC)</Label>
+                  <Input name="amount" type="number" step="any" value={formData.amount} onChange={handleChange} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="discountRate">Discount Rate (%)</Label>
-                  <Input 
-                    id="discountRate" 
-                    name="discountRate"
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    value={formData.discountRate}
-                    onChange={handleChange}
-                    placeholder="5.0" 
-                    required 
-                    className="bg-background/50"
-                  />
-                  <p className="text-xs text-muted-foreground">Early payment discount rate</p>
+                  <Label>Discount Rate (%)</Label>
+                  <Input name="discountRate" type="number" step="0.01" value={formData.discountRate} onChange={handleChange} required />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input 
-                  id="dueDate" 
-                  name="dueDate"
-                  type="date" 
-                  value={formData.dueDate}
-                  onChange={handleChange}
-                  min={new Date().toISOString().split('T')[0]}
-                  required 
-                  className="bg-background/50"
-                />
+                <Label>Due Date</Label>
+                <Input name="dueDate" type="date" value={formData.dueDate} onChange={handleChange} required />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="metadataURI">Description (Optional)</Label>
-                <textarea
-                  id="metadataURI"
-                  name="metadataURI"
-                  value={formData.metadataURI}
-                  onChange={handleChange}
-                  placeholder="Add a description or reference for this invoice"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
+                <Label>Description</Label>
+                <textarea name="metadataURI" value={formData.metadataURI} onChange={handleChange} className="w-full p-2 border rounded-md bg-transparent min-h-[80px]" />
               </div>
             </CardContent>
           </Card>
 
-          <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 flex gap-4">
-            <Info className="size-5 text-primary shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium mb-1">Important Information</p>
-              <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-5">
-                <li>By creating this invoice, you agree to list it on the public marketplace</li>
-                <li>Once funded, the buyer will have until the due date to repay the full amount</li>
-                <li>Early repayments will include the specified discount rate</li>
-                <li>You will receive the funded amount immediately, minus a 1.5% protocol fee</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 items-end">
-            <div className="flex justify-end gap-4 w-full">
-              <Button 
-                variant="outline" 
-                type="button"
-                onClick={() => router.back()}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="min-w-[150px]"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Create Invoice'
-                )}
-              </Button>
-            </div>
-            {(isSubmitting || txStatus === "timeout") && (
-              <p className="text-xs text-muted-foreground text-right max-w-md">
-                {txStatus === "ipfs" && "Uploading invoice to IPFS..."}
-                {txStatus === "awaiting_signature" && "Please confirm the transaction in MetaMask."}
-                {txStatus === "pending" &&
-                  "Transaction submitted. Waiting for confirmation on Polygon Amoy. This may take a minute."}
-                {txStatus === "confirming" &&
-                  "Transaction confirmed. Finalizing and synchronizing with the network..."}
-                {txStatus === "timeout" && (
-                  <>
-                    Transaction is taking longer than expected to confirm. You can check it in the block explorer
-                    {txHash && (
-                      <>
-                        {" "}
-                        <a
-                          href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline"
-                        >
-                          here
-                        </a>
-                        .
-                      </>
-                    )}
-                  </>
-                )}
-              </p>
-            )}
-          </div>
+          <Button type="submit" disabled={isSubmitting} className="w-full py-6 text-lg">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                {txStatus === "ipfs" ? "Uploading to IPFS..." : "Confirming Transaction..."}
+              </>
+            ) : "Create Invoice"}
+          </Button>
         </div>
       </form>
     </div>
   )
-}
+} 

@@ -230,17 +230,36 @@ export default function MSMEActiveInvoicesPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            statusLabel === "Fundraising"
-                              ? "outline"
-                              : isLate
-                              ? "destructive"
-                              : "default"
-                          }
-                        >
-                          {isLate ? "Late" : statusLabel}
-                        </Badge>
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge
+                            variant={
+                              statusLabel === "Fundraising"
+                                ? "outline"
+                                : isLate
+                                ? "destructive"
+                                : "default"
+                            }
+                          >
+                            {isLate ? "Late" : statusLabel}
+                          </Badge>
+                          <div className="flex items-center gap-1">
+                            {invoice.isPublic && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                Public
+                              </Badge>
+                            )}
+                            {invoice.isPrivate && (
+                              <Badge variant="outline" className="text-[10px]">
+                                Private
+                              </Badge>
+                            )}
+                          </div>
+                          {invoice.isPrivate && invoice.exclusiveInvestor && (
+                            <span className="text-[10px] text-muted-foreground">
+                              Investor {formatAddress(invoice.exclusiveInvestor)}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

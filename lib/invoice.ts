@@ -22,7 +22,10 @@ export interface Invoice {
   interestRate: string; // PERSON A: Added to match UI page.tsx expectations
   buyerVerified: boolean; // PERSON A: Added for UI badges
   riskScore: number;      // PERSON A: Added for UI sorting
-  discountRate?: string; 
+  discountRate?: string;
+  exclusiveInvestor: string;
+  isPublic: boolean;
+  isPrivate: boolean;
 }
 
 export type InvoiceStatus = "Fundraising" | "Funded" | "Repaid" | "Defaulted";
@@ -73,23 +76,36 @@ export async function fetchAllInvoices(): Promise<Invoice[]> {
 
     const invoiceResults = await Promise.all(invoicePromises);
     
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
+
     return invoiceResults
       .filter(([id, inv]) => inv !== null)
-      .map(([id, inv]) => ({
-        id: id,
-        msme: inv.msme,
-        buyer: inv.buyer,
-        amount: ethers.formatEther(inv.amount),
-        fundedAmount: ethers.formatEther(inv.fundedAmount),
-        dueDate: new Date(Number(inv.dueDate) * 1000),
-        status: Number(inv.status),
-        metadataURI: inv.metadataURI,
-        // Mapping discountRate to interestRate for UI consistency
-        interestRate: inv.discountRate ? (Number(inv.discountRate) / 100).toString() : "10", 
-        buyerVerified: true, // Mocking true for UI display; update if contract has this
-        riskScore: 50,       // Mocking middle risk; update if contract has this
-        discountRate: inv.discountRate ? ethers.formatUnits(inv.discountRate, 18) : undefined,
-      }))
+      .map(([id, inv]) => {
+        const exclusiveInvestor: string =
+          inv.exclusiveInvestor && typeof inv.exclusiveInvestor === "string"
+            ? inv.exclusiveInvestor
+            : zeroAddress;
+        const isPublic = exclusiveInvestor.toLowerCase() === zeroAddress;
+        const isPrivate = !isPublic;
+
+        return {
+          id: id,
+          msme: inv.msme,
+          buyer: inv.buyer,
+          amount: ethers.formatEther(inv.amount),
+          fundedAmount: ethers.formatEther(inv.fundedAmount),
+          dueDate: new Date(Number(inv.dueDate) * 1000),
+          status: Number(inv.status),
+          metadataURI: inv.metadataURI,
+          interestRate: inv.discountRate ? (Number(inv.discountRate) / 100).toString() : "10",
+          buyerVerified: true,
+          riskScore: 50,
+          discountRate: inv.discountRate ? ethers.formatUnits(inv.discountRate, 18) : undefined,
+          exclusiveInvestor,
+          isPublic,
+          isPrivate,
+        };
+      })
       .sort((a, b) => b.id - a.id);
   } catch (error) {
     console.error("Error fetching all invoices:", error);

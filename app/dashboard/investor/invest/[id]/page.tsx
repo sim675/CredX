@@ -55,6 +55,21 @@ export default function InvestorInvestPage({ params }: { params: Promise<{ id: s
         setIsLoading(true);
         const all = await fetchAllInvoices();
         const found = all.find((inv) => inv.id === invoiceId) || null;
+
+        if (found && found.isPrivate) {
+          if (!address || found.exclusiveInvestor.toLowerCase() !== address.toLowerCase()) {
+            setInvoice(null);
+            setIsLoading(false);
+            toast({
+              title: "Access denied",
+              description: "This private invoice is not assigned to your wallet.",
+              variant: "destructive",
+            });
+            router.replace("/dashboard/investor/marketplace");
+            return;
+          }
+        }
+
         setInvoice(found);
       } catch (error) {
         console.error("Error loading invoice:", error);
@@ -69,7 +84,7 @@ export default function InvestorInvestPage({ params }: { params: Promise<{ id: s
     };
 
     loadInvoice();
-  }, [invoiceId, toast]);
+  }, [invoiceId, address, toast, router]);
 
   if (!isConnected) {
     return (
