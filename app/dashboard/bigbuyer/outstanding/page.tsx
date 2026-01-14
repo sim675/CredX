@@ -319,8 +319,7 @@ export default function BigBuyerOutstandingPage() {
                                 className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
                               >
                                 <a 
-                                  href={getInvoiceDocumentUrl(invoice)}
-                                  target="_blank"
+                                  href={`/dashboard/bigbuyer/history/${invoice.id}`}
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1"
                                 >

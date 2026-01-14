@@ -251,7 +251,6 @@ export default function MSMEActiveInvoicesPage() {
                         >
                           <Link
                             href={`/dashboard/msme/active/${invoice.id}`}
-                            target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1"
                           >

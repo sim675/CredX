@@ -197,8 +197,7 @@ export default function BigBuyerHistoryPage() {
                             className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
                           >
                             <a 
-                              href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
-                              target="_blank"
+                              href={`/dashboard/bigbuyer/history/${invoice.id}`}
                               rel="noopener noreferrer"
                               className="flex items-center gap-1"
                             >

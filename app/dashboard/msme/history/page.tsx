@@ -244,8 +244,7 @@ export default function MSMEHistoryPage() {
                           title="Opens the original invoice uploaded by the MSME for verification"
                         >
                           <a 
-                            href={`https://ipfs.io/ipfs/sample-invoice-${invoice.id}.pdf`}
-                            target="_blank"
+                            href={`/dashboard/msme/active/${invoice.id}`}
                             rel="noopener noreferrer"
                             className="flex items-center gap-1"
                           >
