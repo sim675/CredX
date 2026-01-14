@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Eye, CreditCard, Wallet, FileText, DollarSign, Clock, CheckCircle2, ArrowUpRight } from "lucide-react"
+import { Eye, CreditCard, Wallet, FileText, DollarSign, Clock, CheckCircle2, ArrowUpRight,ExternalLink } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
@@ -273,6 +273,23 @@ export default function BigBuyerOutstandingPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
+                                <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                title="Opens the original invoice uploaded by MSME for verification"
+                                className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                              >
+                                <a 
+                                  href={`/dashboard/bigbuyer/history/${invoice.id}`}
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1"
+                                >
+                                  <FileText className="size-3" />
+                                  View
+                                  <ExternalLink className="size-2.5" />
+                                </a>
+                              </Button>
                               {canRepay && (
                                 <Button
                                   size="sm"

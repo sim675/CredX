@@ -247,8 +247,7 @@ export default function InvestorInvestPage({ params }: { params: Promise<{ id: s
                 aria-label="View the original invoice document in a new tab"
               >
                 <a 
-                  href={invoiceDocumentUrl} 
-                  target="_blank"
+                  href={`/dashboard/investor/invest/${invoice.id}`}
                   rel="noopener noreferrer"
                 >
                   <FileText className="h-4 w-4" />
