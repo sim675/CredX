@@ -22,6 +22,7 @@ contract InvoiceMarketplace {
         uint256 discountRate; // in basis points, e.g. 100 = 1%
         Status status;
         string metadataURI; // IPFS hash or off-chain metadata link
+        address exclusiveInvestor; // NEW: address(0) for public, or specific address for private
     }
 
     uint256 public nextInvoiceId;
@@ -36,7 +37,8 @@ contract InvoiceMarketplace {
         uint256 amount,
         uint256 dueDate,
         uint256 discountRate,
-        string metadataURI
+        string metadataURI,
+        address exclusiveInvestor // Updated event
     );
 
     event Invested(
@@ -66,12 +68,14 @@ contract InvoiceMarketplace {
     /// @param dueDate Due date as unix timestamp
     /// @param discountRate Discount rate in basis points (1% = 100)
     /// @param metadataURI Off-chain metadata (e.g. IPFS/IPNS/HTTPS)
+    /// @param exclusiveInvestor Use address(0) for Public, or specific address for Private
     function createInvoice(
         address buyer,
         uint256 amount,
         uint256 dueDate,
         uint256 discountRate,
-        string calldata metadataURI
+        string calldata metadataURI,
+        address exclusiveInvestor // NEW parameter
     ) external returns (uint256) {
         require(buyer != address(0), "Buyer required");
         require(amount > 0, "Amount must be > 0");
@@ -89,7 +93,8 @@ contract InvoiceMarketplace {
             dueDate: dueDate,
             discountRate: discountRate,
             status: Status.Fundraising,
-            metadataURI: metadataURI
+            metadataURI: metadataURI,
+            exclusiveInvestor: exclusiveInvestor // NEW assignment
         });
 
         emit InvoiceCreated(
@@ -99,17 +104,23 @@ contract InvoiceMarketplace {
             amount,
             dueDate,
             discountRate,
-            metadataURI
+            metadataURI,
+            exclusiveInvestor
         );
 
         return id;
     }
 
     /// @notice Invest native MATIC into an invoice that is currently fundraising
-    /// @dev msg.value is the investment amount
     function investInInvoice(uint256 id) external payable invoiceExists(id) {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Fundraising, "Not fundraising");
+        
+        // NEW: Check for private investor restriction
+        if (inv.exclusiveInvestor != address(0)) {
+            require(msg.sender == inv.exclusiveInvestor, "Only exclusive investor allowed");
+        }
+
         require(msg.value > 0, "No value sent");
         require(inv.fundedAmount + msg.value <= inv.amount, "Overfunding");
 
@@ -122,7 +133,6 @@ contract InvoiceMarketplace {
 
         emit Invested(id, msg.sender, msg.value, inv.fundedAmount);
 
-        // When target is reached, mark as funded and forward principal to MSME
         if (inv.fundedAmount == inv.amount) {
             inv.status = Status.Funded;
             emit InvoiceFunded(id);
@@ -132,14 +142,7 @@ contract InvoiceMarketplace {
         }
     }
 
-    /// @notice Buyer repays the invoice plus yield to investors
-    /// @dev msg.value must equal principal + yield based on discountRate
-    function repayInvoice(uint256 id)
-        external
-        payable
-        invoiceExists(id)
-        onlyBuyer(id)
-    {
+    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Funded, "Invoice not funded");
 
@@ -156,10 +159,7 @@ contract InvoiceMarketplace {
             uint256 principal = investments[id][investor];
             if (principal == 0) continue;
 
-            // Reset first to prevent re-entrancy on this state
             investments[id][investor] = 0;
-
-            // Pro-rata share of total repayment (principal + yield)
             uint256 payout = (msg.value * principal) / inv.amount;
 
             (bool sent, ) = investor.call{value: payout}("");
@@ -169,26 +169,16 @@ contract InvoiceMarketplace {
         emit InvoiceRepaid(id, msg.value);
     }
 
-    /// @notice Mark an invoice as defaulted after the due date has passed
     function markDefaulted(uint256 id) external invoiceExists(id) {
         Invoice storage inv = invoices[id];
-        require(
-            inv.status == Status.Funded || inv.status == Status.Fundraising,
-            "Cannot default"
-        );
+        require(inv.status == Status.Funded || inv.status == Status.Fundraising, "Cannot default");
         require(block.timestamp > inv.dueDate, "Not past due date");
 
         inv.status = Status.Defaulted;
         emit InvoiceDefaulted(id);
     }
 
-    /// @notice Get list of investors for an invoice
-    function getInvestors(uint256 id)
-        external
-        view
-        invoiceExists(id)
-        returns (address[] memory)
-    {
+    function getInvestors(uint256 id) external view invoiceExists(id) returns (address[] memory) {
         return _investors[id];
     }
 }

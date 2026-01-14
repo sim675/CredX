@@ -36,6 +36,42 @@
       "artifacts": [
         "InvoiceMarketplace"
       ]
+    },
+    "C:\\credX\\CredX\\contracts\\InvoiceMarketplace.sol": {
+      "lastModificationDate": 1768407228474,
+      "contentHash": "5f55c9b72c459c6a07c49c75bea97162",
+      "sourceName": "contracts/InvoiceMarketplace.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "InvoiceMarketplace"
+      ]
     }
   }
 }

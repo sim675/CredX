@@ -88,6 +88,16 @@ export default function InvestorInvoiceDetailPage({
           return
         }
 
+        if (found.isPrivate) {
+          if (!address || found.exclusiveInvestor.toLowerCase() !== address.toLowerCase()) {
+            setInvoice(null)
+            setMetadata(null)
+            setError("You do not have access to this private invoice.")
+            setIsLoading(false)
+            return
+          }
+        }
+
         setInvoice(found)
 
         const metadataUrl = getMetadataUrl(found.metadataURI)
@@ -114,7 +124,7 @@ export default function InvestorInvoiceDetailPage({
     }
 
     loadInvoiceAndMetadata()
-  }, [invoiceId])
+  }, [invoiceId, address])
 
   if (!isConnected) {
     return (
@@ -162,13 +172,32 @@ export default function InvestorInvoiceDetailPage({
       <Card className="border-border/50 bg-card/50">
         <CardHeader className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="space-y-1">
               <CardTitle className="text-2xl font-bold">Invoice #{invoice.id}</CardTitle>
               <CardDescription>
                 {metadata?.invoice.description || "View the on-chain invoice details and the original uploaded PDF."}
               </CardDescription>
             </div>
-            <Badge variant={statusLabel === "Fundraising" ? "default" : "secondary"}>{statusLabel}</Badge>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant={statusLabel === "Fundraising" ? "default" : "secondary"}>
+                {statusLabel}
+              </Badge>
+              {invoice.isPublic && (
+                <Badge variant="secondary" className="text-xs">
+                  Public
+                </Badge>
+              )}
+              {invoice.isPrivate && (
+                <div className="flex flex-col items-end gap-1">
+                  <Badge variant="outline" className="text-xs border-destructive text-destructive">
+                    Private
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">
+                    Exclusive Deal
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           {createdAt && (
             <p className="text-xs text-muted-foreground">Metadata created at {createdAt}</p>

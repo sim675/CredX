@@ -175,10 +175,25 @@ export default function MSMEDashboard() {
                     <div className="flex items-center space-x-2">
                       <h3 className="font-medium">Invoice #{invoice.id}</h3>
                       {getStatusBadge(invoice.status)}
+                      {invoice.isPublic && (
+                        <Badge variant="secondary" className="text-xs">
+                          Public
+                        </Badge>
+                      )}
+                      {invoice.isPrivate && (
+                        <Badge variant="outline" className="text-xs">
+                          Private
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Buyer: {formatAddress(invoice.buyer)}
                     </p>
+                    {invoice.isPrivate && invoice.exclusiveInvestor && (
+                      <p className="text-xs text-muted-foreground">
+                        Assigned investor: {formatAddress(invoice.exclusiveInvestor)}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       Due: {invoice.dueDate.toLocaleDateString()}
                     </p>

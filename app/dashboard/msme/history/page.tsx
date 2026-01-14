@@ -193,6 +193,7 @@ export default function MSMEHistoryPage() {
                 <TableRow>
                   <TableHead>Invoice ID</TableHead>
                   <TableHead>Buyer Address</TableHead>
+                  <TableHead className="text-center">Assigned Investor</TableHead>
                   <TableHead className="text-right">Invoice Value</TableHead>
                   <TableHead className="text-right">Amount Received</TableHead>
                   <TableHead>Due Date</TableHead>
@@ -211,6 +212,11 @@ export default function MSMEHistoryPage() {
                       <TableCell className="font-medium">#{invoice.id}</TableCell>
                       <TableCell className="font-mono text-sm">
                         {formatAddress(invoice.buyer)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-sm">
+                        {invoice.isPrivate && invoice.exclusiveInvestor
+                          ? formatAddress(invoice.exclusiveInvestor)
+                          : "-"}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
                         {parseFloat(invoice.amount).toFixed(2)} MATIC
