@@ -264,7 +264,7 @@ export default function LandingPage() {
                     Get Started <ArrowRight className="ml-2 size-4" />
                   </Button>
                 </Link>
-                <Link href="/auth/signin">
+                <Link href="/demo">
                   <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-full border-white/20 bg-black/20 backdrop-blur-sm text-white hover:bg-white/10 hover:border-white/40">
                     Marketplace Demo
                   </Button>
@@ -376,9 +376,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#FE7F42]">Company</h4>
                   <div className="flex flex-col gap-2 text-sm text-white/60">
-                    <Link href="#" className="hover:text-white transition-colors">About</Link>
-                    <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-                    <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+                    <Link href="/about" className="hover:text-white transition-colors">About</Link>
+                    <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+                    <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
                   </div>
                 </div>
                 <div className="space-y-4">
