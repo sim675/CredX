@@ -92,69 +92,85 @@ export default function BigBuyerHistoryPage() {
     )
   }
 
+
+
+
+
+
   return (
-    <div className="min-h-screen bg-[#050505] relative overflow-hidden text-white">
-      <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#FF4D00] opacity-[0.08] blur-[120px]" />
-      <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-[#FF8A00] opacity-[0.05] blur-[100px]" />
+    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white selection:bg-orange-500/30">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+      </div>
 
       <main className="relative z-10 p-6 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-            Payment History
-          </h1>
-          <p className="text-gray-400 mt-2">Complete record of all invoice payments</p>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Payment History</h1>
+          <p className="text-neutral-500 font-medium mt-1">Complete record of all invoice payments</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-400">Total Payments Made</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">{totalPayments}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {totalPayments === 0 ? "No payments yet" : `${totalPayments} ${totalPayments === 1 ? "payment" : "payments"}`}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-400">Total Amount Paid</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">{totalAmountPaid.toFixed(2)} MATIC</div>
-              <p className="text-xs text-muted-foreground mt-1">All-time transaction volume</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-400">Average Payment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">
-                {totalPayments > 0 ? (totalAmountPaid / totalPayments).toFixed(2) : "0.00"} MATIC
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <CheckCircle2 className="size-6 text-orange-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Per invoice payment</p>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Total Payments Made</p>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{totalPayments}</div>
+            <p className="text-xs text-neutral-500 mt-2">
+              {totalPayments === 0 ? "No payments yet" : `${totalPayments} ${totalPayments === 1 ? "payment" : "payments"}`}
+            </p>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <CheckCircle2 className="size-6 text-orange-500" />
+              </div>
+            </div>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Total Amount Paid</p>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{totalAmountPaid.toFixed(2)} MATIC</div>
+            <p className="text-xs text-neutral-500 mt-2">All-time transaction volume</p>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <CheckCircle2 className="size-6 text-orange-500" />
+              </div>
+            </div>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Average Payment</p>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">
+              {totalPayments > 0 ? (totalAmountPaid / totalPayments).toFixed(2) : "0.00"} MATIC
+            </div>
+            <p className="text-xs text-neutral-500 mt-2">Per invoice payment</p>
+          </div>
         </div>
 
-        <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-[#FFD600]" />
-              <span className="text-orange-400 font-bold">Payment History</span>
-            </CardTitle>
-            <CardDescription className="text-orange-300">All completed invoice payments</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="size-2 rounded-full bg-orange-500 shadow-[0_0_10px_orange]" />
+              <h3 className="text-xl font-bold tracking-tight text-white">Payment History</h3>
+            </div>
+            <Badge className="bg-orange-500/10 text-orange-500 border-none px-4 py-1">{invoices.length} Paid</Badge>
+          </div>
+
+          <div>
+            <p className="text-orange-400 font-bold mb-2">History Summary</p>
+            <p className="text-neutral-500">
+              Total paid: {totalAmountPaid.toFixed(2)} MATIC across {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
+            </p>
+          </div>
+
+          <div className="mt-6">
             {invoices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <FileText className="h-12 w-12 text-muted-foreground" />
-                <h3 className="text-lg font-medium">No payment history</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md">
+              <div className="flex flex-col items-center justify-center py-12 space-y-4 opacity-70">
+                <FileText className="h-12 w-12 text-orange-500" />
+                <h3 className="text-lg font-medium text-white">No payment history</h3>
+                <p className="text-sm text-neutral-500 text-center max-w-md">
                   You haven't repaid any invoices yet.
                 </p>
               </div>
@@ -213,8 +229,8 @@ export default function BigBuyerHistoryPage() {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
     </div>
   )

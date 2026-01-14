@@ -106,134 +106,125 @@ export default function BigBuyerReputationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] relative overflow-hidden text-white">
-      <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#FF4D00] opacity-[0.08] blur-[120px]" />
-      <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-[#FF8A00] opacity-[0.05] blur-[100px]" />
+    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white selection:bg-orange-500/30">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+      </div>
 
       <main className="relative z-10 p-6 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-            Reputation
-          </h1>
-          <p className="text-gray-400 mt-2">Your on-chain payment reliability and trust score</p>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Reputation</h1>
+          <p className="text-neutral-500 font-medium mt-1">Your on-chain payment reliability and trust score</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="size-5 text-[#FFD600]" />
-                <span className="text-orange-400 font-bold">Buyer Reliability Score</span>
-              </CardTitle>
-              <CardDescription className="text-orange-300">Based on payment history and punctuality</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-6xl font-extrabold text-white">{grade}</span>
-                <div className="text-right">
-                  <p className="text-sm text-orange-200">Numeric Score</p>
-                  <p className="text-3xl font-extrabold text-white">{reputationScore}</p>
-                  <p className="text-xs text-muted-foreground">out of 1000</p>
-                </div>
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <Award className="size-6 text-orange-500" />
               </div>
-              <Progress value={(reputationScore / 1000) * 100} className="h-3" />
-              <p className="text-sm text-orange-300">
-                {totalInvoices === 0
-                  ? "No invoices yet"
-                  : `Based on ${totalInvoices} ${totalInvoices === 1 ? "invoice" : "invoices"}`}
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Buyer Reliability Score</p>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{grade}</div>
+            <div className="text-right">
+              <p className="text-sm text-orange-200">Numeric Score</p>
+              <p className="text-3xl font-extrabold text-white">{reputationScore}</p>
+              <p className="text-xs text-muted-foreground">out of 1000</p>
+            </div>
+            <Progress value={(reputationScore / 1000) * 100} className="h-3 mt-4" />
+            <p className="text-sm text-orange-300 mt-2">
+              {totalInvoices === 0
+                ? "No invoices yet"
+                : `Based on ${totalInvoices} ${totalInvoices === 1 ? "invoice" : "invoices"}`}
+            </p>
+          </div>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="size-5 text-[#FFD600]" />
-                <span className="text-orange-400 font-bold">Payment Summary</span>
-              </CardTitle>
-              <CardDescription className="text-orange-300">Overview of your payment activity</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-orange-200">Total Invoices</span>
-                <span className="text-sm font-semibold text-white">{totalInvoices}</span>
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <TrendingUp className="size-6 text-orange-500" />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-orange-200">Repaid</span>
-                <span className="text-sm font-semibold text-green-400">{repaidInvoices.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-orange-200">Defaulted</span>
-                <span className="text-sm font-semibold text-red-400">{defaultedInvoices.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-orange-200">Success Rate</span>
-                <span className="text-sm font-semibold text-white">{onTimeRate}%</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Payment Summary</p>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-orange-200">Total Invoices</span>
+              <span className="text-sm font-semibold text-white">{totalInvoices}</span>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-orange-200">Repaid</span>
+              <span className="text-sm font-semibold text-green-400">{repaidInvoices.length}</span>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-orange-200">Defaulted</span>
+              <span className="text-sm font-semibold text-red-400">{defaultedInvoices.length}</span>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-orange-200">Success Rate</span>
+              <span className="text-sm font-semibold text-white">{onTimeRate}%</span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mt-6">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Payment Success Rate</CardTitle>
               <CheckCircle2 className="size-4 text-[#FFD600]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">{onTimeRate}%</div>
-              <p className="text-xs text-muted-foreground">
-                {repaidInvoices.length} of {totalInvoices} {totalInvoices === 1 ? "invoice" : "invoices"}
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-2xl font-extrabold text-white mt-2">{onTimeRate}%</div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {repaidInvoices.length} of {totalInvoices} {totalInvoices === 1 ? "invoice" : "invoices"}
+            </p>
+          </div>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Total Invoices</CardTitle>
               <FileText className="size-4 text-[#FFD600]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">{totalInvoices}</div>
-              <p className="text-xs text-muted-foreground">All-time received</p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-2xl font-extrabold text-white mt-2">{totalInvoices}</div>
+            <p className="text-xs text-muted-foreground mt-2">All-time received</p>
+          </div>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Repaid</CardTitle>
               <TrendingUp className="size-4 text-[#FFD600]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-green-400">{repaidInvoices.length}</div>
-              <p className="text-xs text-muted-foreground">Successfully paid</p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-2xl font-extrabold text-green-400 mt-2">{repaidInvoices.length}</div>
+            <p className="text-xs text-muted-foreground mt-2">Successfully paid</p>
+          </div>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">MSMEs Served</CardTitle>
               <Award className="size-4 text-[#FFD600]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-white">{uniqueMSMEs}</div>
-              <p className="text-xs text-muted-foreground">Unique businesses</p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-2xl font-extrabold text-white mt-2">{uniqueMSMEs}</div>
+            <p className="text-xs text-muted-foreground mt-2">Unique businesses</p>
+          </div>
         </div>
 
-        <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-[#FFD600]" />
-              <span className="text-orange-400 font-bold">Reputation Metrics</span>
-            </CardTitle>
-            <CardDescription className="text-orange-300">Factors contributing to your buyer score</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] p-8 mt-6">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="size-2 rounded-full bg-orange-500 shadow-[0_0_10px_orange]" />
+              <h3 className="text-xl font-bold tracking-tight text-white">Reputation Metrics</h3>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-orange-400 font-bold mb-2">Score Factors</p>
+            <p className="text-neutral-500">
+              Your reputation is calculated based on payment success rate, total invoices, and punctuality.
+            </p>
+          </div>
+
+          <div className="mt-6">
             {totalInvoices === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 space-y-2">
-                <FileText className="h-10 w-10 text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center py-8 space-y-2 opacity-70">
+                <FileText className="h-10 w-10 text-orange-500" />
                 <p className="text-sm text-orange-200 text-center">
                   No invoices yet. Your reputation will be calculated once you receive invoices.
                 </p>
@@ -263,8 +254,8 @@ export default function BigBuyerReputationPage() {
                 </div>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
     </div>
   )
