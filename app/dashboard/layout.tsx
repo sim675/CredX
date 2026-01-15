@@ -101,25 +101,23 @@ export default function DashboardLayout({
   // app/dashboard/layout.tsx
 
   return (
-    // FIX: Replaced Fragment with a div containing overflow-x-hidden to stop horizontal scrollbar
-    <div className="relative min-h-screen w-full overflow-x-hidden">
-      {/* Background Layers - Keep these at the top */}
+    // 1. OUTER CONTAINER: h-screen + overflow-hidden locks the window size.
+    <div className="relative h-screen w-full overflow-hidden">
+      {/* Background Layers */}
       <div className="web3-bg" />
       <div className="web3-grid" />
       <div className="web3-glow" />
 
-      {/* 1. Added style={{ background: 'transparent' }} to SidebarProvider 
-        2. Added bg-transparent to SidebarInset
-      */}
-      <SidebarProvider style={{ background: 'transparent' }}>
+      {/* 2. SIDEBAR PROVIDER: Must be h-full to fill the screen and not grow. */}
+      <SidebarProvider style={{ background: 'transparent' }} className="h-full w-full">
         
-        {/* Sidebar - Passed a prop to ensure it doesn't paint a solid background */}
         <AppSidebar role={user.role} className="bg-transparent border-r border-white/10" />
 
-        <SidebarInset className="bg-transparent flex flex-col h-full">
+        {/* 3. SIDEBAR INSET: overflow-hidden ensures inner elements don't expand this container. */}
+        <SidebarInset className="bg-transparent flex flex-col h-full overflow-hidden">
           
-          {/* Header - Transparent */}
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4 bg-transparent backdrop-blur-sm">
+          {/* Header: Flex-none prevents it from shrinking/growing unexpectedly */}
+          <header className="flex-none flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4 bg-transparent backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4 mx-2" />
@@ -148,7 +146,7 @@ export default function DashboardLayout({
 
           {/* Mismatch Warning */}
           {walletMismatch && (
-            <div className="border-b border-destructive/50 bg-destructive/10 px-4 py-3">
+            <div className="flex-none border-b border-destructive/50 bg-destructive/10 px-4 py-3">
               <Alert variant="destructive" className="border-destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Wallet Mismatch</AlertTitle>
@@ -164,11 +162,8 @@ export default function DashboardLayout({
             </div>
           )}
 
-          {/* Main Content Area
-            Changed bg-accent/5 to bg-transparent
-            Added relative z-10 to ensure content sits above the glow
-          */}
-          <main className={`flex flex-1 flex-col gap-4 p-4 md:p-8 bg-transparent overflow-auto relative z-10 ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
+          {/* 4. MAIN: flex-1 takes remaining space, overflow-y-auto enables the scrollbar here. */}
+          <main className={`flex-1 flex flex-col gap-4 p-4 md:p-8 bg-transparent overflow-y-auto relative z-10 ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
             {children}
           </main>
         </SidebarInset>
