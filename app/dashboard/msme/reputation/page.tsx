@@ -10,6 +10,16 @@ import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
+// 1. Import Rye Font
+import { Rye } from 'next/font/google'
+
+// 2. Configure Rye Font
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
+
 // --- BIG REPUTATION CIRCLE COMPONENT ---
 const ReputationCircle = ({ score }: { score: number }) => {
   const radius = 70; 
@@ -166,13 +176,14 @@ export default function MSMEReputationPage() {
       <div className="absolute bottom-0 left-0 -z-10 w-[300px] h-[300px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">Reputation Scorecard</h2>
+        {/* 3. Applied Rye Font Class Here */}
+        <h2 className={`text-3xl font-bold tracking-tight text-white drop-shadow-sm uppercase ${rye.className}`}>
+          Reputation Scorecard
+        </h2>
         <p className="text-muted-foreground mt-1">
           Your creditworthiness derived directly from your blockchain repayment history.
         </p>
       </div>
-
-      {/* <REMOVED> The 'totalInvoices === 0' check is removed so the UI always renders </REMOVED> */}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
