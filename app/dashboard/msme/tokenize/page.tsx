@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json"
+import { addOrUpdatePendingInvoice, updatePendingInvoiceStatus, removePendingInvoice } from "@/lib/pendingInvoices"
 
 type InvoiceFormState = {
   buyerAddress: string
@@ -136,6 +137,16 @@ export default function TokenizeInvoice() {
       setIsSubmitting(true)
       setTxStatus("ipfs")
 
+      // Ensure wallet provider is available
+      if (!(window as any).ethereum) {
+        throw new Error("Wallet not found. Please install or unlock MetaMask (or a compatible wallet).")
+      }
+
+      // Prepare signer & MSME address up-front so we can reuse them
+      const browserProvider = new ethers.BrowserProvider((window as any).ethereum)
+      const signer = await browserProvider.getSigner()
+      const msmeAddress = await signer.getAddress()
+
       // 1. Prepare IPFS Data with ALL fields to avoid "Validation failed" error
       const ipfsFormData = new FormData()
       ipfsFormData.append("file", file)
@@ -144,54 +155,184 @@ export default function TokenizeInvoice() {
       ipfsFormData.append("dueDate", formData.dueDate)
       ipfsFormData.append("discountRate", formData.discountRate)
       ipfsFormData.append("description", formData.metadataURI || `Invoice from ${formData.buyerAddress}`)
-      
+
       const exclusiveInv = formData.visibility === "public" ? ethers.ZeroAddress : formData.exclusiveInvestor
       ipfsFormData.append("exclusiveInvestor", exclusiveInv)
+      ipfsFormData.append("msmeAddress", msmeAddress)
 
       // 2. Upload to IPFS API
-      const ipfsResponse = await fetch("/api/invoices/ipfs", { 
-        method: "POST", 
-        body: ipfsFormData 
+      const ipfsResponse = await fetch("/api/invoices/ipfs", {
+        method: "POST",
+        body: ipfsFormData,
       })
-      
+
       const ipfsJson = await ipfsResponse.json()
       if (!ipfsResponse.ok) {
-        throw new Error(ipfsJson.error || ipfsJson.details || "IPFS upload failed")
+        const message =
+          (ipfsJson && typeof ipfsJson.error === "string" && ipfsJson.error) ||
+          (ipfsJson && typeof ipfsJson.details === "string" && ipfsJson.details) ||
+          "IPFS upload failed"
+        throw new Error(message)
       }
 
       const metadataUri = ipfsJson.metadataUri
 
       // 3. Blockchain Transaction
-      const provider = new ethers.BrowserProvider(window.ethereum as any)
-      const signer = await provider.getSigner()
       const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string
-      
-      const contract = new ethers.Contract(
-        contractAddress,
-        InvoiceMarketplaceABI.abi,
-        signer
-      )
+      if (!contractAddress) {
+        throw new Error("Contract address is not configured. Please contact support.")
+      }
 
+      const contract = new ethers.Contract(contractAddress, InvoiceMarketplaceABI.abi, signer)
       const discountRateBps = Math.floor(Number(formData.discountRate) * 100)
 
       setTxStatus("awaiting_signature")
-      
-      const tx = await contract.createInvoice(
-        formData.buyerAddress,
-        amountInWei,
-        dueDateTimestamp,
-        discountRateBps,
-        metadataUri,
-        exclusiveInv
-      )
+
+      let tx
+      try {
+        tx = await contract.createInvoice(
+          formData.buyerAddress,
+          amountInWei,
+          dueDateTimestamp,
+          discountRateBps,
+          metadataUri,
+          exclusiveInv
+        )
+      } catch (txError: any) {
+        // User rejected or RPC error while sending the transaction
+        if (txError?.code === "ACTION_REJECTED" || txError?.code === 4001) {
+          throw new Error("You rejected the transaction in your wallet.")
+        }
+        throw txError
+      }
 
       setTxHash(tx.hash)
       setTxStatus("pending")
-      await tx.wait()
-      
+
+      // Track this invoice creation locally as a pending on-chain transaction
+      addOrUpdatePendingInvoice({
+        txHash: tx.hash,
+        msmeAddress,
+        buyerAddress: formData.buyerAddress,
+        amount: formData.amount,
+        dueDate: formData.dueDate,
+        createdAt: new Date().toISOString(),
+        status: "pending",
+      })
+
+      // Wait for on-chain confirmation using a dedicated RPC provider with timeout
+      const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology"
+      const rpcProvider = new ethers.JsonRpcProvider(rpcUrl)
+
+      setTxStatus("confirming")
+
+      let receipt: any = null
+      const timeoutMs = 180_000 // 3 minutes
+      const pollIntervalMs = 5_000
+      const startTime = Date.now()
+
+      try {
+        while (!receipt && Date.now() - startTime < timeoutMs) {
+          receipt = await rpcProvider.getTransactionReceipt(tx.hash)
+
+          if (receipt) break
+          await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+        }
+      } catch (waitError: any) {
+        console.error("Transaction wait error:", waitError)
+        updatePendingInvoiceStatus(tx.hash, "timeout")
+        setTxStatus("timeout")
+        toast({
+          title: "Network delay",
+          description:
+            "Your transaction is taking longer than usual to confirm. You can safely close this page and track it on the block explorer using the link below.",
+        })
+        return
+      }
+
+      if (!receipt) {
+        updatePendingInvoiceStatus(tx.hash, "timeout")
+        setTxStatus("timeout")
+        toast({
+          title: "Network delay",
+          description:
+            "We could not confirm the transaction in time. Please check the transaction status in the explorer.",
+        })
+        return
+      }
+
+      const statusValue = (receipt as any).status
+      const isSuccess = statusValue === 1 || statusValue === 1n
+
+      if (!isSuccess) {
+        updatePendingInvoiceStatus(tx.hash, "failed")
+        setTxStatus("error")
+        toast({
+          title: "Transaction failed on-chain",
+          description: "The transaction was mined but failed. Please check the explorer for full details.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Try to read the InvoiceCreated event to obtain the invoice ID
+      let invoiceId: number | null = null
+      try {
+        const iface = new ethers.Interface(InvoiceMarketplaceABI.abi as any)
+        for (const log of receipt.logs ?? []) {
+          try {
+            const parsed = iface.parseLog(log)
+            if (parsed?.name === "InvoiceCreated") {
+              const rawId = parsed.args?.id as bigint | number
+              invoiceId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId)
+              break
+            }
+          } catch {
+            // Ignore logs that don't belong to this contract
+          }
+        }
+      } catch (parseError) {
+        console.error("Error decoding InvoiceCreated event:", parseError)
+      }
+
+      // Fallback: if we couldn't decode the event, try reading nextInvoiceId from the contract
+      if (invoiceId == null) {
+        try {
+          const nextId = await contract.nextInvoiceId()
+          invoiceId = Number(nextId)
+        } catch (idError) {
+          console.error("Failed to read nextInvoiceId", idError)
+        }
+      }
+
+      // Fire-and-forget email notifications; do not break UX if this fails
+      try {
+        if (invoiceId != null) {
+          await fetch("/api/notifications/invoices/created", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              invoiceId,
+              msmeAddress,
+              buyerAddress: formData.buyerAddress,
+              amount: formData.amount,
+              dueDate: formData.dueDate,
+              discountRate: formData.discountRate,
+            }),
+          })
+        }
+      } catch (notificationError) {
+        console.error("Invoice created notification error:", notificationError)
+      }
+
+      // On success, this pending record can be removed; the invoice will appear from on-chain data
+      removePendingInvoice(tx.hash)
+
       setTxStatus("success")
       toast({ title: "Success!", description: "Invoice tokenized successfully." })
-      
+
       setTimeout(() => {
         router.refresh()
         router.push("/dashboard/msme/active")
@@ -200,9 +341,13 @@ export default function TokenizeInvoice() {
     } catch (error: any) {
       console.error("Submission error:", error)
       setTxStatus("error")
+      let description = "An unexpected error occurred"
+      if (error?.message) {
+        description = error.message
+      }
       toast({ 
         title: "Error", 
-        description: error.message || "An unexpected error occurred", 
+        description, 
         variant: "destructive" 
       })
     } finally {
