@@ -2,32 +2,80 @@ const hre = require("hardhat");
 
 async function main() {
   // 1. Get the signer (the account that will pay gas)
-  // This explicitly connects your private key from hardhat.config.js to the factory
   const [deployer] = await hre.ethers.getSigners();
 
   console.log("-----------------------------------------------");
-  console.log("Deploying contract with account:", deployer.address);
-  
-  // 2. Check balance to ensure you have enough MATIC on Amoy
+  console.log("Deploying contracts with account:", deployer.address);
+
+  // 2. Check balance to ensure you have enough MATIC/POL on Amoy
   const balance = await hre.ethers.provider.getBalance(deployer.address);
   console.log("Account balance:", hre.ethers.formatEther(balance), "MATIC");
   console.log("-----------------------------------------------");
 
-  // 3. Get the Contract Factory
+  // 3. Deploy GovernanceToken (CGOV)
+  const GovernanceToken = await hre.ethers.getContractFactory("GovernanceToken");
+  const governanceToken = await GovernanceToken.deploy();
+  await governanceToken.waitForDeployment();
+  const governanceTokenAddress = await governanceToken.getAddress();
+  console.log("GovernanceToken (CGOV) deployed to:", governanceTokenAddress);
+
+  // 4. Deploy StakingRewards (stakes CGOV, earns MATIC rewards)
+  const StakingRewards = await hre.ethers.getContractFactory("StakingRewards");
+  const stakingRewards = await StakingRewards.deploy(governanceTokenAddress);
+  await stakingRewards.waitForDeployment();
+  const stakingRewardsAddress = await stakingRewards.getAddress();
+  console.log("StakingRewards deployed to:", stakingRewardsAddress);
+
+  // 5. Deploy InvoiceNFT (ERC721 for invoice documents)
+  const InvoiceNFT = await hre.ethers.getContractFactory("InvoiceNFT");
+  const invoiceNFT = await InvoiceNFT.deploy();
+  await invoiceNFT.waitForDeployment();
+  const invoiceNFTAddress = await invoiceNFT.getAddress();
+  console.log("InvoiceNFT deployed to:", invoiceNFTAddress);
+
+  // 6. Deploy InvoiceMarketplace implementation
   const InvoiceMarketplace = await hre.ethers.getContractFactory("InvoiceMarketplace");
+  const invoiceMarketplaceImpl = await InvoiceMarketplace.deploy();
+  await invoiceMarketplaceImpl.waitForDeployment();
+  const invoiceMarketplaceImplAddress = await invoiceMarketplaceImpl.getAddress();
+  console.log("InvoiceMarketplace implementation deployed to:", invoiceMarketplaceImplAddress);
 
-  console.log("Sending deployment transaction...");
+  // 7. Deploy TransparentUpgradeableProxy for InvoiceMarketplace
+  const TransparentUpgradeableProxy = await hre.ethers.getContractFactory("TransparentUpgradeableProxy");
 
-  // 4. Deploy the contract
-  const invoiceMarketplace = await InvoiceMarketplace.deploy();
+  // feeBps is the share of interest sent to StakingRewards (e.g. 500 = 5%)
+  const feeBps = 500;
 
-  // 5. Wait for the transaction to be mined on the blockchain
-  await invoiceMarketplace.waitForDeployment();
+  // Encode the initialize call for the proxy constructor
+  const initData = InvoiceMarketplace.interface.encodeFunctionData("initialize", [
+    invoiceNFTAddress,
+    stakingRewardsAddress,
+    feeBps,
+  ]);
 
-  const address = await invoiceMarketplace.getAddress();
-  
-  console.log("SUCCESS!");
-  console.log("InvoiceMarketplace deployed to:", address);
+  console.log("Deploying TransparentUpgradeableProxy...");
+  const proxy = await TransparentUpgradeableProxy.deploy(
+    invoiceMarketplaceImplAddress,
+    deployer.address,
+    initData
+  );
+
+  await proxy.waitForDeployment();
+  const proxyAddress = await proxy.getAddress();
+  console.log("InvoiceMarketplace proxy deployed to:", proxyAddress);
+
+  // 8. Wire InvoiceNFT to use the proxy as the marketplace
+  const txSetMarketplace = await invoiceNFT.setMarketplace(proxyAddress);
+  await txSetMarketplace.wait();
+  console.log("InvoiceNFT marketplace set to proxy address");
+
+  console.log("-----------------------------------------------");
+  console.log("Deployment summary:");
+  console.log("GovernanceToken (CGOV):        ", governanceTokenAddress);
+  console.log("StakingRewards:                ", stakingRewardsAddress);
+  console.log("InvoiceNFT:                    ", invoiceNFTAddress);
+  console.log("InvoiceMarketplace Impl:       ", invoiceMarketplaceImplAddress);
+  console.log("InvoiceMarketplace Proxy (use this in frontend):", proxyAddress);
   console.log("-----------------------------------------------");
 }
 

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "./InvoiceNFT.sol";
+import "./StakingRewards.sol";
+
 /// @title InvoiceMarketplace for MSMEs, investors, and big buyers on Polygon
 /// @notice Simple invoice financing marketplace using native MATIC
 contract InvoiceMarketplace {
@@ -29,6 +32,13 @@ contract InvoiceMarketplace {
     mapping(uint256 => Invoice) public invoices;
     mapping(uint256 => address[]) private _investors;
     mapping(uint256 => mapping(address => uint256)) public investments;
+
+    address public owner;
+    bool public paused;
+    uint256 public feeBps;
+    InvoiceNFT public invoiceNFT;
+    StakingRewards public stakingRewards;
+    bool private _initialized;
 
     event InvoiceCreated(
         uint256 indexed id,
@@ -62,6 +72,62 @@ contract InvoiceMarketplace {
         _;
     }
 
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused, "Paused");
+        _;
+    }
+
+    function initialize(
+        address _invoiceNFT,
+        address payable _stakingRewards,
+        uint256 _feeBps
+    ) external {
+        require(!_initialized, "Already initialized");
+        require(_invoiceNFT != address(0), "NFT zero");
+        require(_stakingRewards != address(0), "Staking zero");
+        require(_feeBps <= 10_000, "fee too high");
+
+        owner = msg.sender;
+        invoiceNFT = InvoiceNFT(_invoiceNFT);
+        stakingRewards = StakingRewards(_stakingRewards);
+
+        feeBps = _feeBps;
+        _initialized = true;
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Owner zero");
+        owner = newOwner;
+    }
+
+    function pause() external onlyOwner {
+        paused = true;
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+    }
+
+    function setFeeBps(uint256 _feeBps) external onlyOwner {
+        require(_feeBps <= 10_000, "fee too high");
+        feeBps = _feeBps;
+    }
+
+    function setInvoiceNFT(address _invoiceNFT) external onlyOwner {
+        require(_invoiceNFT != address(0), "NFT zero");
+        invoiceNFT = InvoiceNFT(_invoiceNFT);
+    }
+
+    function setStakingRewards(address payable _stakingRewards) external onlyOwner {
+        require(_stakingRewards != address(0), "Staking zero");
+        stakingRewards = StakingRewards(_stakingRewards);
+    }
+
     /// @notice Create a new invoice listed for funding
     /// @param buyer Address of the big buyer who will repay the invoice
     /// @param amount Total invoice amount in wei (MATIC)
@@ -76,7 +142,7 @@ contract InvoiceMarketplace {
         uint256 discountRate,
         string calldata metadataURI,
         address exclusiveInvestor // NEW parameter
-    ) external returns (uint256) {
+    ) external whenNotPaused returns (uint256) {
         require(buyer != address(0), "Buyer required");
         require(amount > 0, "Amount must be > 0");
         require(dueDate > block.timestamp, "Due date must be in future");
@@ -108,11 +174,15 @@ contract InvoiceMarketplace {
             exclusiveInvestor
         );
 
+        if (address(invoiceNFT) != address(0)) {
+            invoiceNFT.mintInvoice(msg.sender, id, metadataURI);
+        }
+
         return id;
     }
 
     /// @notice Invest native MATIC into an invoice that is currently fundraising
-    function investInInvoice(uint256 id) external payable invoiceExists(id) {
+    function investInInvoice(uint256 id) external payable invoiceExists(id) whenNotPaused {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Fundraising, "Not fundraising");
         
@@ -142,17 +212,33 @@ contract InvoiceMarketplace {
         }
     }
 
-    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) {
+    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) whenNotPaused {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Funded, "Invoice not funded");
 
-        uint256 totalOwed = inv.amount + ((inv.amount * inv.discountRate) / 10_000);
+        uint256 interest = (inv.amount * inv.discountRate) / 10_000;
+        uint256 totalOwed = inv.amount + interest;
         require(msg.value == totalOwed, "Incorrect repayment amount");
 
         inv.status = Status.Repaid;
 
+        uint256 fee = (interest * feeBps) / 10_000;
+        uint256 amountForInvestors = msg.value - fee;
+
+        _distributeRepayment(id, amountForInvestors);
+
+        if (fee > 0 && address(stakingRewards) != address(0)) {
+            stakingRewards.notifyRewardAmount{value: fee}();
+        }
+
+        emit InvoiceRepaid(id, msg.value);
+    }
+
+    function _distributeRepayment(uint256 id, uint256 amountForInvestors) internal {
         address[] storage invs = _investors[id];
         uint256 len = invs.length;
+        uint256 totalPaidToInvestors;
+        uint256 baseAmount = invoices[id].amount;
 
         for (uint256 i = 0; i < len; i++) {
             address investor = invs[i];
@@ -160,13 +246,19 @@ contract InvoiceMarketplace {
             if (principal == 0) continue;
 
             investments[id][investor] = 0;
-            uint256 payout = (msg.value * principal) / inv.amount;
+            uint256 payout = (amountForInvestors * principal) / baseAmount;
+            totalPaidToInvestors += payout;
 
             (bool sent, ) = investor.call{value: payout}("");
             require(sent, "Payout failed");
         }
 
-        emit InvoiceRepaid(id, msg.value);
+        uint256 dust = amountForInvestors - totalPaidToInvestors;
+        if (dust > 0 && len > 0) {
+            address firstInvestor = invs[0];
+            (bool sentDust, ) = firstInvestor.call{value: dust}("");
+            require(sentDust, "Dust payout failed");
+        }
     }
 
     function markDefaulted(uint256 id) external invoiceExists(id) {
