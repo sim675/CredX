@@ -13,6 +13,16 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+// 1. Import Rye Font
+import { Rye } from 'next/font/google'
+
+// 2. Configure Rye Font
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
+
 // --- Custom Neon Progress Bar Component ---
 const ProgressBar = ({ 
   value, 
@@ -136,7 +146,13 @@ export default function MSMEHistoryPage() {
 
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">Settled History</h2>
+        {/* 3. Apply Rye font class here */}
+        <h2 className={cn(
+          "text-4xl font-bold tracking-tight text-white drop-shadow-sm uppercase",
+          rye.className
+        )}>
+          Settled History
+        </h2>
         <p className="text-muted-foreground mt-1">
           Complete financial record of settled and closed invoices.
         </p>

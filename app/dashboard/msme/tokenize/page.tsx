@@ -5,13 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-// Merged icons from both files
 import { Info, Loader2, UploadCloud, FileText, X, CheckCircle2, Wallet, Calendar, Percent, Coins, Eye, Lock } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json"
 import { addOrUpdatePendingInvoice, updatePendingInvoiceStatus, removePendingInvoice } from "@/lib/pendingInvoices"
+
+// 1. Import the Rye font (Optional: assumes you want the western style here too based on context)
+import { Rye } from 'next/font/google'
+
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
 
 type InvoiceFormState = {
   buyerAddress: string
@@ -137,17 +145,15 @@ export default function TokenizeInvoice() {
       setIsSubmitting(true)
       setTxStatus("ipfs")
 
-      // Ensure wallet provider is available
       if (!(window as any).ethereum) {
         throw new Error("Wallet not found. Please install or unlock MetaMask (or a compatible wallet).")
       }
 
-      // Prepare signer & MSME address up-front so we can reuse them
       const browserProvider = new ethers.BrowserProvider((window as any).ethereum)
       const signer = await browserProvider.getSigner()
       const msmeAddress = await signer.getAddress()
 
-      // 1. Prepare IPFS Data with ALL fields to avoid "Validation failed" error
+      // 1. Prepare IPFS Data
       const ipfsFormData = new FormData()
       ipfsFormData.append("file", file)
       ipfsFormData.append("buyerAddress", formData.buyerAddress)
@@ -199,7 +205,6 @@ export default function TokenizeInvoice() {
           exclusiveInv
         )
       } catch (txError: any) {
-        // User rejected or RPC error while sending the transaction
         if (txError?.code === "ACTION_REJECTED" || txError?.code === 4001) {
           throw new Error("You rejected the transaction in your wallet.")
         }
@@ -209,7 +214,6 @@ export default function TokenizeInvoice() {
       setTxHash(tx.hash)
       setTxStatus("pending")
 
-      // Track this invoice creation locally as a pending on-chain transaction
       addOrUpdatePendingInvoice({
         txHash: tx.hash,
         msmeAddress,
@@ -220,14 +224,13 @@ export default function TokenizeInvoice() {
         status: "pending",
       })
 
-      // Wait for on-chain confirmation using a dedicated RPC provider with timeout
       const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology"
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl)
 
       setTxStatus("confirming")
 
       let receipt: any = null
-      const timeoutMs = 180_000 // 3 minutes
+      const timeoutMs = 180_000 
       const pollIntervalMs = 5_000
       const startTime = Date.now()
 
@@ -275,7 +278,6 @@ export default function TokenizeInvoice() {
         return
       }
 
-      // Try to read the InvoiceCreated event to obtain the invoice ID
       let invoiceId: number | null = null
       try {
         const iface = new ethers.Interface(InvoiceMarketplaceABI.abi as any)
@@ -288,14 +290,13 @@ export default function TokenizeInvoice() {
               break
             }
           } catch {
-            // Ignore logs that don't belong to this contract
+            // Ignore
           }
         }
       } catch (parseError) {
         console.error("Error decoding InvoiceCreated event:", parseError)
       }
 
-      // Fallback: if we couldn't decode the event, try reading nextInvoiceId from the contract
       if (invoiceId == null) {
         try {
           const nextId = await contract.nextInvoiceId()
@@ -305,7 +306,6 @@ export default function TokenizeInvoice() {
         }
       }
 
-      // Fire-and-forget email notifications; do not break UX if this fails
       try {
         if (invoiceId != null) {
           await fetch("/api/notifications/invoices/created", {
@@ -327,7 +327,6 @@ export default function TokenizeInvoice() {
         console.error("Invoice created notification error:", notificationError)
       }
 
-      // On success, this pending record can be removed; the invoice will appear from on-chain data
       removePendingInvoice(tx.hash)
 
       setTxStatus("success")
@@ -355,11 +354,10 @@ export default function TokenizeInvoice() {
     }
   }
 
-  // --- Success State UI (Updated to match dark/glass theme) ---
+  // --- Success State UI ---
   if (txStatus === "success") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in zoom-in duration-300 relative z-10">
-        {/* Background Blobs for consistency */}
         <div className="absolute top-10 left-10 -z-10 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
         
         <div className="bg-primary/20 border border-primary/50 p-6 rounded-full backdrop-blur-md">
@@ -387,8 +385,13 @@ export default function TokenizeInvoice() {
       <div className="absolute top-10 left-10 -z-10 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-10 right-10 -z-10 w-[300px] h-[300px] bg-orange-600/10 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">Tokenize Invoice</h1>
+      {/* FIXED: Added 'items-center', 'text-center' to align header text to the center 
+        relative to the card below. Also applied rye font.
+      */}
+      <div className="flex flex-col items-center text-center space-y-2 mb-4">
+        <h1 className={`text-5xl font-bold tracking-tight text-white drop-shadow-sm uppercase ${rye.className}`}>
+            Tokenize Invoice
+        </h1>
         <p className="text-muted-foreground text-lg">Convert your unpaid receivables into instant on-chain liquidity.</p>
       </div>
 

@@ -14,6 +14,16 @@ import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+// 1. Import Rye Font
+import { Rye } from 'next/font/google'
+
+// 2. Configure Rye Font
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
+
 // --- Custom Progress Bar Component ---
 const ProgressBar = ({ 
   value, 
@@ -180,7 +190,13 @@ export default function MSMEWalletPage() {
       <div className="absolute bottom-10 right-10 -z-10 w-[400px] h-[400px] bg-purple-500/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">My Wallet</h2>
+        {/* 3. Apply Rye Font Here */}
+        <h2 className={cn(
+          "text-3xl font-bold tracking-tight text-white drop-shadow-sm uppercase",
+          rye.className
+        )}>
+          My Wallet
+        </h2>
         <p className="text-muted-foreground mt-1">
           Manage your assets, view balances, and track blockchain activity.
         </p>

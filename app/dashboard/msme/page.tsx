@@ -16,6 +16,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth"; 
 import { formatEther } from "viem";
 import { cn } from "@/lib/utils";
+// 1. IMPORT THE FONT HERE
+import { Rye } from 'next/font/google';
+
+// 2. CONFIGURE THE FONT
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 // --- CIRCULAR PROGRESS COMPONENT ---
 const CircleProgress = ({ percentage, color }: { percentage: number; color: string }) => {
@@ -190,7 +199,14 @@ export default function MSMEDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <span className="text-xl font-medium text-orange-200/80 block mb-1 font-pirate tracking-wide">{greeting},</span>
+          <span 
+            className={cn(
+              "text-3xl font-medium text-orange-200/90 block mb-2 uppercase tracking-wider", 
+              rye.className
+            )}
+          >
+            {greeting}.
+          </span>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-sm">{user?.name || "User"}</h1>
         </div>
         <Button className="bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-600/90 shadow-lg shadow-primary/20 transition-all duration-300" asChild>

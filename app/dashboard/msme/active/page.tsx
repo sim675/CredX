@@ -11,7 +11,16 @@ import { Wallet, ExternalLink, FileText, Activity, CheckCircle, Clock } from "lu
 import { fetchInvoicesByMSME, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
+// 1. Import the Rye font
+import { Rye } from 'next/font/google'
 
+// 2. Configure the font
+const rye = Rye({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
 // --- CIRCULAR PROGRESS COMPONENT ---
 const CircleProgress = ({ percentage, color }: { percentage: number; color: string }) => {
   const radius = 30; 
@@ -145,7 +154,12 @@ export default function MSMEActiveInvoicesPage() {
 
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">Active Invoices</h2>
+        <h2 className={cn(
+          "text-4xl font-bold tracking-tight text-white drop-shadow-sm uppercase",
+          rye.className
+        )}>
+          Active Invoices
+        </h2>
         <p className="text-muted-foreground mt-1">
           Track invoices that are currently fundraising or awaiting settlement.
         </p>

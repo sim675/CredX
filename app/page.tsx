@@ -356,9 +356,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#FE7F42]">Platform</h4>
                   <div className="flex flex-col gap-2 text-sm text-white/60">
-                    <Link href="#" className="hover:text-white">Marketplace</Link>
-                    <Link href="#" className="hover:text-white">For MSMEs</Link>
-                    <Link href="#" className="hover:text-white">Risk Engine</Link>
+                    <Link href="/demo" className="hover:text-white">Marketplace</Link>
+                    <Link href="/MsMe" className="hover:text-white">For MSMEs</Link>
+                    <Link href="/Risky" className="hover:text-white">Risk Engine</Link>
                   </div>
                 </div>
 
@@ -366,9 +366,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#FE7F42]">Contact</h4>
                   <div className="flex flex-col gap-2 text-sm text-white/60">
-                    <Link href="#" className="hover:text-white transition-colors">Support</Link>
-                    <Link href="#" className="hover:text-white transition-colors">Sales</Link>
-                    <Link href="#" className="hover:text-white transition-colors">Media</Link>
+                    <Link href="/Support" className="hover:text-white transition-colors">Support</Link>
+                    <Link href="/Sales" className="hover:text-white transition-colors">Sales</Link>
+                    <Link href="/Media" className="hover:text-white transition-colors">Media</Link>
                   </div>
                 </div>
 
