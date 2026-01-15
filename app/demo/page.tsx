@@ -319,7 +319,7 @@ export default function DemoPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'msme' | 'investor' | 'buyer'>('investor');
-  const [activeTab, setActiveTab] = useState('marketplace');
+  const [activeTab, setActiveTab] = useState('process');
   const [introFinished, setIntroFinished] = useState(false);
 
   useEffect(() => {
@@ -470,7 +470,7 @@ export default function DemoPage() {
                       style={{
                         borderColor: selectedRole === item.role ? undefined : 'transparent',
                         background: selectedRole === item.role 
-                          ? `linear-gradient(135deg, ${item.role === 'msme' ? 'rgb(178 255 252 / 0.1)' : item.role === 'investor' ? 'rgb(197 16 119 / 0.1)' : 'rgb(108 92 231 / 0.1)'}, transparent)`
+                          ? `linear-gradient(135deg, ${item.role === 'msme' ? 'rgb(178 255 252 / 0.05)' : item.role === 'investor' ? 'rgb(197 16 119 / 0.05)' : 'rgb(108 92 231 / 0.05)'}, transparent)`
                           : undefined
                       }}
                     >
@@ -478,16 +478,14 @@ export default function DemoPage() {
                       {selectedRole === item.role && (
                         <motion.div
                           layoutId="activeRoleBorder"
-                          className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.gradient} opacity-20`}
+                          className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.gradient} opacity-10`}
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                         />
                       )}
                       
                       <div className={`relative z-10 flex items-center gap-4 ${
                         selectedRole === item.role 
-                          ? item.role === 'msme' ? 'text-[#B2FFFC]' :
-                            item.role === 'investor' ? 'text-[#C51077]' :
-                            'text-[#6c5ce7]'
+                          ? 'text-white'
                           : 'text-white/60'
                       }`}>
                         <motion.div
@@ -630,16 +628,16 @@ export default function DemoPage() {
                 selectedRole === 'investor' ? 'border-[#C51077]/30' :
                 'border-[#6c5ce7]/30'
               }`}>
-                <TabsTrigger value="marketplace" className={`data-[state=active]:${
-                  selectedRole === 'msme' ? 'bg-[#B2FFFC]/20 text-[#B2FFFC]' :
-                  selectedRole === 'investor' ? 'bg-[#C51077]/20 text-[#C51077]' :
-                  'bg-[#6c5ce7]/20 text-[#6c5ce7]'
-                }`}>Marketplace</TabsTrigger>
                 <TabsTrigger value="process" className={`data-[state=active]:${
                   selectedRole === 'msme' ? 'bg-[#B2FFFC]/20 text-[#B2FFFC]' :
                   selectedRole === 'investor' ? 'bg-[#C51077]/20 text-[#C51077]' :
                   'bg-[#6c5ce7]/20 text-[#6c5ce7]'
                 }`}>Process Flow</TabsTrigger>
+                <TabsTrigger value="marketplace" className={`data-[state=active]:${
+                  selectedRole === 'msme' ? 'bg-[#B2FFFC]/20 text-[#B2FFFC]' :
+                  selectedRole === 'investor' ? 'bg-[#C51077]/20 text-[#C51077]' :
+                  'bg-[#6c5ce7]/20 text-[#6c5ce7]'
+                }`}>Marketplace</TabsTrigger>
                 <TabsTrigger value="analytics" className={`data-[state=active]:${
                   selectedRole === 'msme' ? 'bg-[#B2FFFC]/20 text-[#B2FFFC]' :
                   selectedRole === 'investor' ? 'bg-[#C51077]/20 text-[#C51077]' :
