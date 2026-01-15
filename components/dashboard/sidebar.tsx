@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, FileText, TrendingUp, Wallet, LogOut, Search, PlusCircle, History, UserCheck, Clock, Receipt, CreditCard } from "lucide-react"
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth, type UserRole } from "@/hooks/use-auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const ROLE_NAV = {
   msme: [
@@ -44,7 +47,12 @@ const ROLE_NAV = {
   ],
 }
 
-export function AppSidebar({ role }: { role: UserRole }) {
+// Define the props interface to include className and other Sidebar props
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  role: UserRole
+}
+
+export function AppSidebar({ role, className, ...props }: AppSidebarProps) {
   const { logout, user } = useAuth()
   const pathname = usePathname()
   const navItems = ROLE_NAV[role] || []
@@ -53,7 +61,13 @@ export function AppSidebar({ role }: { role: UserRole }) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
-    <Sidebar variant="inset" collapsible="icon" className="w-64 bg-[#0a0a0a] border-r border-white/5">
+    <Sidebar 
+      variant="inset" 
+      collapsible="icon" 
+      // Use cn() to merge the default glass styles with the incoming className (bg-transparent)
+      className={cn("w-64 bg-black/20 backdrop-blur-md border-r border-white/5", className)} 
+      {...props}
+    >
       <SidebarHeader className="h-16 border-b border-white/5 px-6 flex items-center">
         <div className="font-bold text-2xl tracking-tighter">
           <span className="font-pirate text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] group-data-[collapsible=icon]:hidden">CredX</span>

@@ -98,72 +98,81 @@ export default function DashboardLayout({
     );
   }
 
+  // app/dashboard/layout.tsx
+
   return (
-    <SidebarProvider>
-      {/* Sidebar */}
-      <AppSidebar role={user.role} />
+    // FIX: Replaced Fragment with a div containing overflow-x-hidden to stop horizontal scrollbar
+    <div className="relative min-h-screen w-full overflow-x-hidden">
+      {/* Background Layers - Keep these at the top */}
+      <div className="web3-bg" />
+      <div className="web3-grid" />
+      <div className="web3-glow" />
 
-      <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 bg-background">
-          {/* Left: Sidebar trigger + breadcrumb */}
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="h-4 mx-2" />
+      {/* 1. Added style={{ background: 'transparent' }} to SidebarProvider 
+        2. Added bg-transparent to SidebarInset
+      */}
+      <SidebarProvider style={{ background: 'transparent' }}>
+        
+        {/* Sidebar - Passed a prop to ensure it doesn't paint a solid background */}
+        <AppSidebar role={user.role} className="bg-transparent border-r border-white/10" />
 
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {user.role === "msme"
-                      ? "MSME Portal - POL"
-                      : user.role === "investor"
-                      ? "Investor Portal - POL"
-                      : "Big Buyer Portal - POL"}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-
-          {/* Right: Wallet and POL Balance */}
-          <div className="flex items-center gap-4">
-            <div className="text-sm font-medium">
-              {isLoadingBalance ? "Loading..." : `${balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL`}
+        <SidebarInset className="bg-transparent flex flex-col h-full">
+          
+          {/* Header - Transparent */}
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4 bg-transparent backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="h-4 mx-2" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {user.role === "msme"
+                        ? "MSME Portal - POL"
+                        : user.role === "investor"
+                        ? "Investor Portal - POL"
+                        : "Big Buyer Portal - POL"}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-            <WalletDropdown />
-          </div>
-        </header>
 
-        {/* Wallet Mismatch Warning */}
-        {walletMismatch && (
-          <div className="border-b border-destructive/50 bg-destructive/10 px-4 py-3">
-            <Alert variant="destructive" className="border-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Wallet Mismatch</AlertTitle>
-              <AlertDescription className="flex items-center justify-between">
-                <span>
-                  Please connect your registered wallet ({user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}) to continue.
-                  All blockchain actions are disabled until the correct wallet is connected.
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => disconnect()}
-                  className="ml-4"
-                >
-                  Disconnect & Switch
-                </Button>
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+            <div className="flex items-center gap-4">
+              <div className="text-sm font-medium">
+                {isLoadingBalance ? "Loading..." : `${balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL`}
+              </div>
+              <WalletDropdown />
+            </div>
+          </header>
 
-        {/* Page Content */}
-        <main className={`flex flex-1 flex-col gap-4 p-4 md:p-8 bg-accent/5 overflow-auto ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          {/* Mismatch Warning */}
+          {walletMismatch && (
+            <div className="border-b border-destructive/50 bg-destructive/10 px-4 py-3">
+              <Alert variant="destructive" className="border-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Wallet Mismatch</AlertTitle>
+                <AlertDescription className="flex items-center justify-between">
+                  <span>
+                    Please connect your registered wallet ({user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}) to continue.
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => disconnect()} className="ml-4">
+                    Disconnect & Switch
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Main Content Area
+            Changed bg-accent/5 to bg-transparent
+            Added relative z-10 to ensure content sits above the glow
+          */}
+          <main className={`flex flex-1 flex-col gap-4 p-4 md:p-8 bg-transparent overflow-auto relative z-10 ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

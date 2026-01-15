@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Info, Loader2, UploadCloud, FileText, X, CheckCircle2 } from "lucide-react"
+// Merged icons from both files
+import { Info, Loader2, UploadCloud, FileText, X, CheckCircle2, Wallet, Calendar, Percent, Coins, Eye, Lock } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
@@ -209,18 +210,22 @@ export default function TokenizeInvoice() {
     }
   }
 
+  // --- Success State UI (Updated to match dark/glass theme) ---
   if (txStatus === "success") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in zoom-in duration-300">
-        <div className="bg-primary/10 p-6 rounded-full">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in zoom-in duration-300 relative z-10">
+        {/* Background Blobs for consistency */}
+        <div className="absolute top-10 left-10 -z-10 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+        
+        <div className="bg-primary/20 border border-primary/50 p-6 rounded-full backdrop-blur-md">
           <CheckCircle2 className="w-16 h-16 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold">Invoice Tokenized!</h1>
-        <p className="text-muted-foreground text-center max-w-sm">
+        <h1 className="text-3xl font-bold text-white tracking-tight">Invoice Tokenized!</h1>
+        <p className="text-white/60 text-center max-w-sm">
           Your invoice has been successfully recorded on the Polygon Amoy blockchain.
         </p>
         {txHash && (
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="border-white/10 text-white hover:bg-white/10" asChild>
             <a href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
               View on Explorer
             </a>
@@ -231,99 +236,302 @@ export default function TokenizeInvoice() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tokenize New Invoice</h1>
-        <p className="text-muted-foreground">Convert your unpaid receivables into instant liquidity.</p>
+    <div className="max-w-4xl mx-auto space-y-8 relative z-10 pb-20">
+      
+      {/* Decorative Blur Background */}
+      <div className="absolute top-10 left-10 -z-10 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 -z-10 w-[300px] h-[300px] bg-orange-600/10 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-sm font-pirate">Tokenize Invoice</h1>
+        <p className="text-muted-foreground text-lg">Convert your unpaid receivables into instant on-chain liquidity.</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
-          <Card className="border-border/50 bg-card/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Invoice Details</CardTitle>
+          
+          {/* GLASSMORPHISM CARD */}
+          <Card className="backdrop-blur-xl border-white/10 bg-[#121212]/80 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-orange-600 opacity-80" />
+            
+            <CardHeader className="pb-4 border-b border-white/5 bg-white/5">
+              <CardTitle className="text-xl font-semibold text-white/90 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Invoice Details
+              </CardTitle>
+              <CardDescription className="text-white/50">
+                Enter the details exactly as they appear on your physical invoice.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+
+            <CardContent className="space-y-8 pt-8">
               
-              <div className="space-y-2">
-                <Label>Upload Invoice (PDF)</Label>
+              {/* --- IPFS File Uploader Section --- */}
+              <div className="space-y-3">
+                <Label className="text-white/90 text-sm font-medium">Upload Invoice (PDF)</Label>
                 {!file ? (
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 hover:bg-muted/50"}`}
+                    className={`
+                      border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300
+                      flex flex-col items-center justify-center gap-3
+                      group
+                      ${isDragging 
+                        ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(255,122,24,0.2)]" 
+                        : "border-white/10 bg-black/20 hover:bg-white/5 hover:border-primary/50"}
+                    `}
                   >
-                    <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileInput} />
-                    <UploadCloud className="w-8 h-8 text-primary" />
-                    <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="application/pdf"
+                      onChange={handleFileInput}
+                    />
+                    <div className="p-4 rounded-full bg-white/5 border border-white/10 group-hover:scale-110 transition-transform duration-300 group-hover:border-primary/50">
+                        <UploadCloud className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-base font-medium text-white/80 group-hover:text-white">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF only (max 10MB)</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-primary" />
-                      <p className="text-sm font-medium">{file.name}</p>
+                  <div className="flex items-center justify-between p-4 border border-white/10 rounded-xl bg-primary/5 shadow-inner">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-lg bg-primary/20 text-primary border border-primary/20">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-white">{file.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
                     </div>
-                    <Button type="button" variant="ghost" size="icon" onClick={removeFile}><X className="w-4 h-4" /></Button>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={removeFile}
+                      className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full h-10 w-10 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Visibility</Label>
-                  <div className="flex gap-2">
-                    <Button type="button" variant={formData.visibility === "public" ? "default" : "outline"} onClick={() => setFormData(p => ({...p, visibility: "public"}))}>Public</Button>
-                    <Button type="button" variant={formData.visibility === "private" ? "default" : "outline"} onClick={() => setFormData(p => ({...p, visibility: "private"}))}>Private</Button>
+              {/* --- Visibility Section (Styled for Glassmorphism) --- */}
+              <div className="grid md:grid-cols-2 gap-8">
+                 <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Visibility</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        variant={formData.visibility === "public" ? "default" : "outline"} 
+                        onClick={() => setFormData(p => ({...p, visibility: "public"}))}
+                        className={formData.visibility === "public" 
+                            ? "bg-primary text-white hover:bg-primary/90 flex-1" 
+                            : "bg-transparent border-white/10 text-muted-foreground hover:text-white hover:bg-white/5 flex-1"
+                        }
+                      >
+                        <Eye className="w-4 h-4 mr-2" /> Public
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant={formData.visibility === "private" ? "default" : "outline"} 
+                        onClick={() => setFormData(p => ({...p, visibility: "private"}))}
+                        className={formData.visibility === "private" 
+                            ? "bg-primary text-white hover:bg-primary/90 flex-1" 
+                            : "bg-transparent border-white/10 text-muted-foreground hover:text-white hover:bg-white/5 flex-1"
+                        }
+                      >
+                         <Lock className="w-4 h-4 mr-2" /> Private
+                      </Button>
+                    </div>
+                 </div>
+
+                 {formData.visibility === "private" && (
+                    <div className="space-y-2 group">
+                        <Label htmlFor="exclusiveInvestor" className="text-xs uppercase tracking-wider text-muted-foreground group-focus-within:text-primary transition-colors">Exclusive Investor Wallet</Label>
+                        <div className="relative">
+                            <Wallet className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                            <Input 
+                                id="exclusiveInvestor"
+                                name="exclusiveInvestor" 
+                                value={formData.exclusiveInvestor} 
+                                onChange={handleChange} 
+                                placeholder="0x..." 
+                                className="pl-10 font-mono bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11"
+                            />
+                        </div>
+                    </div>
+                 )}
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-6">
+                   <div className="space-y-2 group">
+                    <Label htmlFor="buyerAddress" className="text-xs uppercase tracking-wider text-muted-foreground group-focus-within:text-primary transition-colors">Buyer's Wallet Address</Label>
+                    <div className="relative">
+                      <Wallet className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input 
+                        id="buyerAddress" 
+                        name="buyerAddress"
+                        value={formData.buyerAddress}
+                        onChange={handleChange}
+                        placeholder="0x..." 
+                        required 
+                        className="pl-10 font-mono bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 group">
+                    <Label htmlFor="dueDate" className="text-xs uppercase tracking-wider text-muted-foreground group-focus-within:text-primary transition-colors">Due Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input 
+                        id="dueDate" 
+                        name="dueDate"
+                        type="date" 
+                        value={formData.dueDate}
+                        onChange={handleChange}
+                        required 
+                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11 [color-scheme:dark]"
+                      />
+                    </div>
                   </div>
                 </div>
-                {formData.visibility === "private" && (
-                  <div className="space-y-2">
-                    <Label>Exclusive Investor Wallet</Label>
-                    <Input name="exclusiveInvestor" value={formData.exclusiveInvestor} onChange={handleChange} placeholder="0x..." />
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  <div className="space-y-2 group">
+                    <Label htmlFor="amount" className="text-xs uppercase tracking-wider text-muted-foreground group-focus-within:text-primary transition-colors">Amount (MATIC)</Label>
+                    <div className="relative">
+                      <Coins className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input 
+                        id="amount" 
+                        name="amount"
+                        type="number" 
+                        step="any"
+                        value={formData.amount}
+                        onChange={handleChange}
+                        placeholder="1000.00" 
+                        required 
+                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11 font-bold tracking-wide"
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label>Buyer's Wallet Address</Label>
-                <Input name="buyerAddress" value={formData.buyerAddress} onChange={handleChange} placeholder="0x..." required />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Amount (MATIC)</Label>
-                  <Input name="amount" type="number" step="any" value={formData.amount} onChange={handleChange} required />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="discountRate" className="text-xs uppercase tracking-wider text-muted-foreground group-focus-within:text-primary transition-colors">Discount Rate (%)</Label>
+                    <div className="relative">
+                      <Percent className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input 
+                        id="discountRate" 
+                        name="discountRate"
+                        type="number" 
+                        step="0.01"
+                        value={formData.discountRate}
+                        onChange={handleChange}
+                        placeholder="5.0" 
+                        required 
+                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Discount Rate (%)</Label>
-                  <Input name="discountRate" type="number" step="0.01" value={formData.discountRate} onChange={handleChange} required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="metadataURI" className="text-xs uppercase tracking-wider text-muted-foreground">Description (Optional)</Label>
+                <textarea
+                  id="metadataURI"
+                  name="metadataURI"
+                  value={formData.metadataURI}
+                  onChange={handleChange}
+                  placeholder="Add a description or reference for this invoice"
+                  className="flex min-h-[100px] w-full rounded-md border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder:text-muted-foreground/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                />
+              </div>
+
+              {/* Info Box */}
+              <div className="p-4 bg-blue-500/5 rounded-xl border border-blue-500/10 flex gap-4 items-start backdrop-blur-sm">
+                <Info className="size-5 text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium mb-1 text-blue-200">Important Information</p>
+                  <ul className="text-xs text-blue-200/60 space-y-1 list-disc pl-4 marker:text-blue-500">
+                    <li>By creating this invoice, you agree to list it on the public marketplace.</li>
+                    <li>Once funded, the buyer will have until the due date to repay the full amount.</li>
+                    <li>Early repayments will include the specified discount rate.</li>
+                    <li>A 1.5% protocol fee will be deducted from the funded amount.</li>
+                  </ul>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Due Date</Label>
-                <Input name="dueDate" type="date" value={formData.dueDate} onChange={handleChange} required />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <textarea name="metadataURI" value={formData.metadataURI} onChange={handleChange} className="w-full p-2 border rounded-md bg-transparent min-h-[80px]" />
-              </div>
             </CardContent>
           </Card>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full py-6 text-lg">
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                {txStatus === "ipfs" ? "Uploading to IPFS..." : "Confirming Transaction..."}
-              </>
-            ) : "Create Invoice"}
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-4 items-end mt-4">
+            <div className="flex justify-end gap-4 w-full md:w-auto">
+              <Button 
+                variant="outline" 
+                type="button"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+                className="border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white w-full md:w-32 h-12"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full md:w-48 h-12 bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-600/90 shadow-lg shadow-primary/20 text-white font-semibold transition-all duration-300 hover:scale-[1.02]"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {txStatus === "ipfs" ? "Uploading..." : "Processing..."}
+                  </>
+                ) : (
+                  'Create Invoice'
+                )}
+              </Button>
+            </div>
+            
+            {(isSubmitting || txStatus === "pending" || txStatus === "confirming" || txStatus === "awaiting_signature") && (
+              <div className="w-full md:w-auto p-3 rounded-lg bg-black/40 border border-white/10 backdrop-blur-md">
+                <p className="text-xs text-muted-foreground text-center md:text-right flex items-center justify-end gap-2">
+                  {txStatus === "ipfs" && <> <UploadCloud className="w-3 h-3 animate-bounce"/> Uploading to IPFS...</>}
+                  {txStatus === "awaiting_signature" && "Check your wallet to sign the transaction."}
+                  {txStatus === "pending" && "Transaction submitted. Waiting for blockchain confirmation..."}
+                  {txStatus === "confirming" && "Finalizing on network..."}
+                  {txStatus === "timeout" && (
+                    <span className="text-orange-400">Taking longer than usual. Check explorer.</span>
+                  )}
+                  {txHash && (
+                    <a
+                      href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-2 underline text-primary hover:text-primary/80"
+                    >
+                      View TX
+                    </a>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </form>
     </div>
   )
-} 
+}
