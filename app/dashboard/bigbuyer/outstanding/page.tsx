@@ -88,6 +88,23 @@ export default function BigBuyerOutstandingPage() {
       const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei })
       await tx.wait()
 
+      if (address) {
+        try {
+          await fetch("/api/notifications/invoices/repaid", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              invoiceId,
+              buyerAddress: address,
+            }),
+          })
+        } catch (notificationError) {
+          console.error("Invoice repaid notification error:", notificationError)
+        }
+      }
+
       toast({
         title: "Success",
         description: "Invoice repaid successfully",

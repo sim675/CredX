@@ -182,6 +182,24 @@ export default function InvestorInvestPage({ params }: { params: Promise<{ id: s
       const tx = await contract.investInInvoice(invoiceId as number, { value: valueWei });
       await tx.wait();
 
+      if (address) {
+        try {
+          await fetch("/api/notifications/investments/received", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              invoiceId,
+              investorAddress: address,
+              msmeAddress: invoice.msme,
+            }),
+          });
+        } catch (notificationError) {
+          console.error("Investment notification error:", notificationError);
+        }
+      }
+
       toast({
         title: "Investment successful",
         description: `You invested ${amount} MATIC into Invoice #${invoiceId}.`,
