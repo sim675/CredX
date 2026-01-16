@@ -1,12 +1,9 @@
-// lib/contracts/useInvoiceContract.ts
 import { usePublicClient, useWalletClient } from "wagmi";
 import { ethers } from "ethers";
-import InvoiceMarketplaceABI from "./InvoiceMarketplace.json";
-import { INVOICE_MARKETPLACE_ADDRESS } from "./addresses";
+import StakingRewardsABI from "./StakingRewards.json";
+import { STAKING_REWARDS_ADDRESS } from "./addresses";
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || INVOICE_MARKETPLACE_ADDRESS;
-
-export function useInvoiceContract() {
+export function useStakingRewards() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
@@ -18,8 +15,8 @@ export function useInvoiceContract() {
   const getContract = (provider?: ethers.Provider | ethers.Signer) => {
     const contractProvider = provider || getProvider();
     return new ethers.Contract(
-      CONTRACT_ADDRESS,
-      InvoiceMarketplaceABI.abi,
+      STAKING_REWARDS_ADDRESS,
+      StakingRewardsABI.abi,
       contractProvider
     );
   };
@@ -32,7 +29,6 @@ export function useInvoiceContract() {
     if (!walletClient) {
       throw new Error("Wallet not connected");
     }
-    // Convert viem wallet client to ethers signer
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     return getContract(signer);
@@ -42,7 +38,7 @@ export function useInvoiceContract() {
     getReadContract,
     getWriteContract,
     getProvider,
-    contractAddress: CONTRACT_ADDRESS,
+    contractAddress: STAKING_REWARDS_ADDRESS,
   };
 }
 

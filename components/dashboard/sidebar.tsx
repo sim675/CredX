@@ -3,7 +3,7 @@ import { useState } from "react"
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, TrendingUp, Wallet, LogOut, Search, PlusCircle, History, UserCheck, Clock, Receipt, CreditCard } from "lucide-react"
+import { LayoutDashboard, FileText, TrendingUp, Wallet, LogOut, Search, PlusCircle, History, UserCheck, Clock, Receipt, CreditCard, Coins, Shield } from "lucide-react"
 
 import {
   Sidebar,
@@ -18,6 +18,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import { useAuth, type UserRole } from "@/hooks/use-auth"
+import { useIsContractOwner } from "@/hooks/useIsContractOwner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -35,6 +36,8 @@ const ROLE_NAV = {
     { label: "Overview", icon: LayoutDashboard, href: "/dashboard/investor" },
     { label: "Invoice Marketplace", icon: Search, href: "/dashboard/investor/marketplace" },
     { label: "My Portfolio", icon: TrendingUp, href: "/dashboard/investor/portfolio" },
+    { label: "My Invoices", icon: FileText, href: "/dashboard/my-invoices" },
+    { label: "Governance & Staking", icon: Coins, href: "/dashboard/governance-staking" },
     { label: "Returns", icon: History, href: "/dashboard/investor/returns" },
     { label: "Wallet", icon: Wallet, href: "/dashboard/investor/wallet" },
   ],
@@ -56,6 +59,7 @@ export function AppSidebar({ role, className, ...props }: AppSidebarProps) {
   const { logout, user } = useAuth()
   const pathname = usePathname()
   const navItems = ROLE_NAV[role] || []
+  const { isOwner } = useIsContractOwner()
   
   // Track which item is being hovered
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
@@ -130,6 +134,53 @@ export function AppSidebar({ role, className, ...props }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Panel - Only visible to contract owner */}
+        {isOwner && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] px-4 mb-2">
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Admin Panel">
+                    <a 
+                      href="/dashboard/admin"
+                      onMouseEnter={() => setHoveredItem("Admin Panel")}
+                      className={`relative flex items-center h-11 w-full rounded-lg transition-colors duration-300 px-4 ${
+                        pathname === "/dashboard/admin" || hoveredItem === "Admin Panel" ? "text-white" : "text-zinc-400"
+                      }`}
+                    >
+                      {(pathname === "/dashboard/admin" || hoveredItem === "Admin Panel") && (
+                        <motion.div
+                          layoutId="admin-pill"
+                          className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-red-500/10 to-red-500/20"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        />
+                      )}
+                      <div className="relative z-10 flex items-center gap-3">
+                        <Shield className={`size-[18px] transition-colors ${
+                          pathname === "/dashboard/admin" || hoveredItem === "Admin Panel" ? "text-red-500" : "text-zinc-500"
+                        }`} />
+                        <span className="text-[14px] font-medium">Admin Panel</span>
+                      </div>
+                      {(pathname === "/dashboard/admin" || hoveredItem === "Admin Panel") && (
+                        <motion.div
+                          layoutId="admin-light"
+                          className="absolute right-0 w-[3px] h-6 bg-red-500 rounded-l-full shadow-[0_0_15px_rgba(239,68,68,1)]"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                        />
+                      )}
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-white/5 group-data-[collapsible=icon]:p-2">

@@ -1,14 +1,30 @@
-// lib/contracts/useInvoiceContract.ts
 import { usePublicClient, useWalletClient } from "wagmi";
 import { ethers } from "ethers";
-import InvoiceMarketplaceABI from "./InvoiceMarketplace.json";
-import { INVOICE_MARKETPLACE_ADDRESS } from "./addresses";
+import GovernanceTokenABI from "./GovernanceToken.json";
+import { useStakingRewards } from "./useStakingRewards";
+import { useEffect, useState } from "react";
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || INVOICE_MARKETPLACE_ADDRESS;
-
-export function useInvoiceContract() {
+export function useGovernanceToken() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+  const { getReadContract: getStakingContract } = useStakingRewards();
+  const [tokenAddress, setTokenAddress] = useState<string | null>(null);
+
+  // Get token address from StakingRewards contract
+  useEffect(() => {
+    const fetchTokenAddress = async () => {
+      try {
+        const stakingContract = getStakingContract();
+        const address = await stakingContract.stakingToken();
+        setTokenAddress(address);
+      } catch (error) {
+        console.error("Failed to fetch token address:", error);
+      }
+    };
+    if (getStakingContract) {
+      fetchTokenAddress();
+    }
+  }, [getStakingContract]);
 
   const getProvider = () => {
     const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology";
@@ -16,10 +32,13 @@ export function useInvoiceContract() {
   };
 
   const getContract = (provider?: ethers.Provider | ethers.Signer) => {
+    if (!tokenAddress) {
+      throw new Error("Token address not loaded");
+    }
     const contractProvider = provider || getProvider();
     return new ethers.Contract(
-      CONTRACT_ADDRESS,
-      InvoiceMarketplaceABI.abi,
+      tokenAddress,
+      GovernanceTokenABI.abi,
       contractProvider
     );
   };
@@ -32,7 +51,6 @@ export function useInvoiceContract() {
     if (!walletClient) {
       throw new Error("Wallet not connected");
     }
-    // Convert viem wallet client to ethers signer
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     return getContract(signer);
@@ -42,7 +60,7 @@ export function useInvoiceContract() {
     getReadContract,
     getWriteContract,
     getProvider,
-    contractAddress: CONTRACT_ADDRESS,
+    tokenAddress,
   };
 }
 
