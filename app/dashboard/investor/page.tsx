@@ -17,6 +17,7 @@ export default function InvestorDashboard() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([])
   const [investments, setInvestments] = useState<Record<number, string>>({})
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function InvestorDashboard() {
 
       try {
         setIsLoading(true)
+        setError(null)
         const invoices = await fetchAllInvoices()
         setAllInvoices(invoices)
 
@@ -42,6 +44,7 @@ export default function InvestorDashboard() {
         setInvestments(investmentMap)
       } catch (error) {
         console.error(error)
+        setError("Failed to load investment data. Please try again later.")
         toast({
           title: "Error",
           description: "Failed to load investment data",
@@ -112,6 +115,15 @@ export default function InvestorDashboard() {
         <h1 className="text-3xl font-bold tracking-tight">Investor Overview</h1>
         <p className="text-muted-foreground">Manage your decentralized RWA portfolio.</p>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="text-destructive">{"There's a problem"}</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {portfolioStats.map((stat) => (

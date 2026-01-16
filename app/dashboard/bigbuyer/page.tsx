@@ -25,6 +25,7 @@ export default function BigBuyerDashboard() {
   const { address, isConnected } = useAccount()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -36,10 +37,12 @@ export default function BigBuyerDashboard() {
 
       try {
         setIsLoading(true)
+        setError(null)
         const buyerInvoices = await fetchInvoicesByBuyer(address)
         setInvoices(buyerInvoices)
       } catch (error) {
         console.error(error)
+        setError("Failed to load invoices. Please try again later.")
         toast({ title: "Error", description: "Failed to load invoices", variant: "destructive" })
       } finally {
         setIsLoading(false)
@@ -99,6 +102,14 @@ export default function BigBuyerDashboard() {
              <Button className="bg-orange-600 hover:bg-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.3)]">New Invoice</Button>
           </div>
         </header>
+
+        {error && (
+          <section>
+            <div className="p-4 rounded-2xl border border-red-500/40 bg-red-500/10 text-sm text-red-200">
+              {error}
+            </div>
+          </section>
+        )}
 
         {/* Top 4 Stat Cards */}
         <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

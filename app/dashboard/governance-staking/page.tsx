@@ -29,6 +29,7 @@ export default function GovernanceStakingPage() {
   const [isClaiming, setIsClaiming] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [stakeAmount, setStakeAmount] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isConnected || !address || !tokenAddress) {
@@ -39,6 +40,7 @@ export default function GovernanceStakingPage() {
     const loadData = async () => {
       try {
         setIsLoading(true)
+        setError(null)
         const tokenContractInstance = getTokenContract()
         const stakingContractInstance = getStakingContract()
 
@@ -56,6 +58,7 @@ export default function GovernanceStakingPage() {
         setAllowance(ethers.formatEther(tokenAllowance))
       } catch (error) {
         console.error("Failed to load staking data:", error)
+        setError("Failed to load staking data. Please try again later.")
         toast({
           title: "Error",
           description: "Failed to load staking data",
@@ -263,6 +266,15 @@ export default function GovernanceStakingPage() {
         <h1 className="text-3xl font-bold tracking-tight">Governance & Staking</h1>
         <p className="text-muted-foreground">Stake CGOV tokens to earn MATIC rewards and participate in governance.</p>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="text-destructive">{"There's a problem"}</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/50 bg-card/50">

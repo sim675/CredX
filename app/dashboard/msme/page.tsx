@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAccount, usePublicClient, useBalance } from "wagmi";
 import { PlusCircle, ArrowUpRight, Wallet, Copy, MessageCircle, X, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -109,6 +109,7 @@ export default function MSMEDashboard() {
   const [isChatExpanded, setIsChatExpanded] = useState(false); // Optional: for full screen mode
   
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -126,10 +127,12 @@ export default function MSMEDashboard() {
       }
       try {
         setIsLoading(true);
+        setError(null);
         const msmeInvoices = await fetchInvoicesByMSME(address, publicClient || undefined);
         setInvoices(msmeInvoices);
       } catch (error) {
         console.error(error);
+        setError("Failed to load invoices. Please try again later.");
         toast({
           title: "Error",
           description: "Failed to load invoices",
@@ -214,6 +217,15 @@ export default function MSMEDashboard() {
           <Link href="/dashboard/msme/tokenize"><PlusCircle className="mr-2 h-4 w-4" />Create Invoice</Link>
         </Button>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="text-destructive">{"There's a problem"}</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

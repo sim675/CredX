@@ -2,7 +2,7 @@ import { usePublicClient, useWalletClient } from "wagmi";
 import { ethers } from "ethers";
 import GovernanceTokenABI from "./GovernanceToken.json";
 import { useStakingRewards } from "./useStakingRewards";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function useGovernanceToken() {
   const publicClient = usePublicClient();
@@ -21,40 +21,41 @@ export function useGovernanceToken() {
         console.error("Failed to fetch token address:", error);
       }
     };
-    if (getStakingContract) {
-      fetchTokenAddress();
-    }
+    fetchTokenAddress();
   }, [getStakingContract]);
 
-  const getProvider = () => {
+  const getProvider = useCallback(() => {
     const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology";
     return new ethers.JsonRpcProvider(rpcUrl);
-  };
+  }, []);
 
-  const getContract = (provider?: ethers.Provider | ethers.Signer) => {
-    if (!tokenAddress) {
-      throw new Error("Token address not loaded");
-    }
-    const contractProvider = provider || getProvider();
-    return new ethers.Contract(
-      tokenAddress,
-      GovernanceTokenABI.abi,
-      contractProvider
-    );
-  };
+  const getContract = useCallback(
+    (provider?: ethers.Provider | ethers.Signer) => {
+      if (!tokenAddress) {
+        throw new Error("Token address not loaded");
+      }
+      const contractProvider = provider || getProvider();
+      return new ethers.Contract(
+        tokenAddress,
+        GovernanceTokenABI.abi,
+        contractProvider
+      );
+    },
+    [getProvider, tokenAddress]
+  );
 
-  const getReadContract = () => {
+  const getReadContract = useCallback(() => {
     return getContract(getProvider());
-  };
+  }, [getContract, getProvider]);
 
-  const getWriteContract = async () => {
+  const getWriteContract = useCallback(async () => {
     if (!walletClient) {
       throw new Error("Wallet not connected");
     }
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     return getContract(signer);
-  };
+  }, [walletClient, getContract]);
 
   return {
     getReadContract,

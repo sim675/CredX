@@ -32,6 +32,7 @@ export default function MyInvoicesPage() {
 
   const [invoices, setInvoices] = useState<InvoiceNFT[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -42,6 +43,7 @@ export default function MyInvoicesPage() {
     const loadInvoices = async () => {
       try {
         setIsLoading(true)
+        setError(null)
         const nftContract = getReadContract()
 
         // Get balance
@@ -105,6 +107,7 @@ export default function MyInvoicesPage() {
         setInvoices(invoicesWithMetadata)
       } catch (error) {
         console.error("Failed to load invoices:", error)
+        setError("Failed to load your invoices. Please try again later.")
         toast({
           title: "Error",
           description: "Failed to load your invoices",
@@ -165,6 +168,15 @@ export default function MyInvoicesPage() {
         <h1 className="text-3xl font-bold tracking-tight">My Invoices</h1>
         <p className="text-muted-foreground">View your CINVOICE NFTs and associated invoice details.</p>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="text-destructive">{"There's a problem"}</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {invoices.length === 0 ? (
         <Card className="border-border/50 bg-card/50">
