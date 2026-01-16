@@ -54,6 +54,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Block login for any account whose email address has not been verified yet.
+    // Only users with isVerified === true are allowed to log in.
+    if (user.isVerified !== true) {
+      return NextResponse.json(
+        { error: "Please verify your email address before logging in" },
+        { status: 403 }
+      );
+    }
+
     // --- PERSON A: ROLE-BASED ACCESS LOGIC START ---
     
     // 1. Create the base response with user data

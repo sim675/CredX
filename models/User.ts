@@ -7,6 +7,9 @@ export interface IUser extends Document {
   role: "msme" | "investor" | "bigbuyer";
   walletAddress?: string;
   createdAt: Date;
+  isVerified: boolean;
+  verificationToken?: string | null;
+  verificationTokenExpiry?: Date | null;
 }
 
 const UserSchema: Schema<IUser> = new Schema<IUser>({
@@ -25,6 +28,9 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
     lowercase: true, // Automatically converts 0xABC to 0xabc before saving
     trim: true,      // Removes any accidental white space
   },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String, required: false },
+  verificationTokenExpiry: { type: Date, required: false },
   createdAt: { type: Date, default: Date.now },
 });
 

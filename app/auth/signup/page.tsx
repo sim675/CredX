@@ -3,15 +3,18 @@
 
 import type React from "react"
 import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth, type UserRole } from "@/hooks/use-auth"
-import { ArrowLeft, Eye, EyeOff, Building2, Landmark, Briefcase, AlertCircle } from "lucide-react"
+import type { UserRole } from "@/hooks/use-auth"
+
+import { ArrowLeft, Eye, EyeOff, Building2, Landmark, Briefcase, AlertCircle, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
@@ -21,13 +24,15 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth()
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    
+    setSuccessMessage(null)
+
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
@@ -43,19 +48,21 @@ export default function SignUpPage() {
         throw new Error(data.error || "Signup failed")
       }
 
-      // --- MIDDLEWARE FIX: SET COOKIE MANUALLY ---
-      // This ensures the middleware sees the role before the redirect happens
-      const date = new Date();
-      date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
-      document.cookie = `user_role=${role}; expires=${date.toUTCString()}; path=/`;
+      // On successful signup we DO NOT log the user in immediately.
+      // Instead we show a generic "check your email" message and then
+      // redirect them to the signin page so they can log in after verifying.
+      setSuccessMessage(
+        data.message ||
+          "Account created successfully. Please check your email for a verification link."
+      )
 
-      // Small delay to ensure browser storage is committed
       setTimeout(() => {
-        login(data)
-      }, 50);
+        router.push("/auth/signin")
+      }, 3000)
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
+
     } finally {
       setIsLoading(false)
     }
@@ -90,6 +97,15 @@ export default function SignUpPage() {
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
+          {successMessage && (
+            <div className="px-6 pt-4">
+              <Alert className="bg-emerald-900/20 border-emerald-800">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           {error && (
             <div className="px-6 pt-4">
               <Alert variant="destructive" className="bg-red-900/20 border-red-800">

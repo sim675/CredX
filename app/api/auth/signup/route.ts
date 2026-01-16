@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
+import { isAllowedSignupEmail } from "@/lib/utils";
+import { sendVerificationEmail } from "@/lib/email";
 
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .refine(isAllowedSignupEmail, {
+      message: "Please use a valid, non-disposable email address",
+    }),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["msme", "investor", "bigbuyer"]),
 });
@@ -50,20 +58,34 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await hashPassword(password);
 
+    // Generate a unique email verification token for this user
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+
     const createdUser = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpiry,
+    });
+
+    // Send the verification email in the background; if it fails we still return success
+    sendVerificationEmail({
+      to: createdUser.email,
+      token: verificationToken,
+      name: createdUser.name,
+    }).catch((error) => {
+      console.error("Failed to send verification email", error);
     });
 
     return NextResponse.json(
       {
-        id: createdUser._id.toString(),
-        name: createdUser.name,
-        email: createdUser.email,
-        role: createdUser.role,
-        walletAddress: createdUser.walletAddress || undefined,
+        message:
+          "Account created successfully. Please check your email for a verification link.",
+        requiresEmailVerification: true,
       },
       { status: 201 }
     );
