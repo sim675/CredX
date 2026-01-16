@@ -85,7 +85,7 @@ export default function BigBuyerOutstandingPage() {
       const tenThousand = BigInt(10000)
       const totalOwedWei = principalWei + (principalWei * discountRateBps) / tenThousand
 
-      const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei })
+      const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei,gasLimit: 300000 })
       await tx.wait()
 
       if (address) {
