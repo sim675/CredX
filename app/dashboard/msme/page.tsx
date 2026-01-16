@@ -144,9 +144,10 @@ export default function MSMEDashboard() {
 
   // Stats Logic
   const totalValue = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
-  const fundedValue = invoices.filter((inv) => inv.status === 2).reduce((sum, inv) => sum + parseFloat(inv.fundedAmount), 0);
+  // In new enum: 2 = Fundraising, 3 = Funded
+  const fundedValue = invoices.filter((inv) => inv.status === 3).reduce((sum, inv) => sum + parseFloat(inv.fundedAmount), 0);
   const fundingRate = totalValue > 0 ? Math.round((fundedValue / totalValue) * 100) : 0;
-  const activeCount = invoices.filter((inv) => inv.status === 1).length;
+  const activeCount = invoices.filter((inv) => inv.status === 2).length;
   const activeRate = invoices.length > 0 ? Math.round((activeCount / invoices.length) * 100) : 0;
 
   const stats = [
@@ -158,15 +159,15 @@ export default function MSMEDashboard() {
 
   const getStatusBadge = (status: number) => {
     const statusLabel = getStatusLabel(status);
-    const statusMap = {
-      "Fundraising": { variant: "outline" as const, className: "border-amber-500/50 text-amber-400 bg-amber-500/10" },
-      "Funded": { variant: "default" as const, className: "bg-green-600 hover:bg-green-700" },
-      "Repaid": { variant: "secondary" as const, className: "" },
-      "Defaulted": { variant: "destructive" as const, className: "" },
+    const statusMap: Record<string, { variant: "outline" | "default" | "secondary" | "destructive"; className: string }> = {
+      Fundraising: { variant: "outline", className: "border-amber-500/50 text-amber-400 bg-amber-500/10" },
+      Funded: { variant: "default", className: "bg-green-600 hover:bg-green-700" },
+      Repaid: { variant: "secondary", className: "" },
+      Defaulted: { variant: "destructive", className: "" },
     };
-    const { variant, className } = statusMap[statusLabel] || { variant: "outline" as const, className: "" };
-    // @ts-ignore
-    return <Badge variant={variant} className={className}>{statusLabel}</Badge>;
+
+    const mapping = statusMap[statusLabel] || { variant: "outline" as const, className: "" };
+    return <Badge variant={mapping.variant} className={mapping.className}>{statusLabel}</Badge>;
   };
 
   const formatAddress = (addr: string) => 

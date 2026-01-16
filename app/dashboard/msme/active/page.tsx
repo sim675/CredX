@@ -61,9 +61,9 @@ export default function MSMEActiveInvoicesPage() {
       try {
         setIsLoading(true)
         const msmeInvoices = await fetchInvoicesByMSME(address, publicClient || undefined)
-        // Filter for active invoices: Fundraising (1) or Funded (2)
+        // Filter for active invoices: Fundraising (2) or Funded (3)
         const activeInvoices = msmeInvoices.filter(
-          (inv) => inv.status === 1 || inv.status === 2
+          (inv) => inv.status === 2 || inv.status === 3
         )
         setInvoices(activeInvoices)
       } catch (error) {
@@ -92,7 +92,7 @@ export default function MSMEActiveInvoicesPage() {
   )
   
   // Calculate average days to settlement (for funded invoices only)
-  const fundedInvoices = invoices.filter((inv) => inv.status === 2)
+  const fundedInvoices = invoices.filter((inv) => inv.status === 3)
   const avgDaysToSettlement =
     fundedInvoices.length > 0
       ? Math.round(

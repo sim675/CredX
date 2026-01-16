@@ -3,12 +3,14 @@ pragma solidity ^0.8.20;
 
 import "./InvoiceNFT.sol";
 import "./StakingRewards.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title InvoiceMarketplace for MSMEs, investors, and big buyers on Polygon
 /// @notice Simple invoice financing marketplace using native MATIC
-contract InvoiceMarketplace {
+contract InvoiceMarketplace is ReentrancyGuard {
     enum Status {
         None,
+        PendingBuyer,
         Fundraising,
         Funded,
         Repaid,
@@ -32,6 +34,10 @@ contract InvoiceMarketplace {
     mapping(uint256 => Invoice) public invoices;
     mapping(uint256 => address[]) private _investors;
     mapping(uint256 => mapping(address => uint256)) public investments;
+    // Gross amount repaid by the buyer (principal + interest)
+    mapping(uint256 => uint256) public totalRepaid;
+    // Net amount available to investors after protocol fee
+    mapping(uint256 => uint256) public totalRepaidForInvestors;
 
     address public owner;
     bool public paused;
@@ -61,6 +67,9 @@ contract InvoiceMarketplace {
     event InvoiceFunded(uint256 indexed id);
     event InvoiceRepaid(uint256 indexed id, uint256 totalRepaid);
     event InvoiceDefaulted(uint256 indexed id);
+    event InvoiceConfirmed(uint256 indexed id, address indexed buyer);
+    event RepaymentClaimed(uint256 indexed id, address indexed investor, uint256 amount);
+    event RefundClaimed(uint256 indexed id, address indexed investor, uint256 amount);
 
     modifier invoiceExists(uint256 id) {
         require(invoices[id].status != Status.None, "Invoice does not exist");
@@ -158,7 +167,7 @@ contract InvoiceMarketplace {
             fundedAmount: 0,
             dueDate: dueDate,
             discountRate: discountRate,
-            status: Status.Fundraising,
+            status: Status.PendingBuyer,
             metadataURI: metadataURI,
             exclusiveInvestor: exclusiveInvestor // NEW assignment
         });
@@ -181,10 +190,18 @@ contract InvoiceMarketplace {
         return id;
     }
 
+    function confirmInvoice(uint256 id) external invoiceExists(id) onlyBuyer(id) whenNotPaused {
+        Invoice storage inv = invoices[id];
+        require(inv.status == Status.PendingBuyer, "Waiting for Buyer");
+        inv.status = Status.Fundraising;
+        emit InvoiceConfirmed(id, inv.buyer);
+    }
+
     /// @notice Invest native MATIC into an invoice that is currently fundraising
-    function investInInvoice(uint256 id) external payable invoiceExists(id) whenNotPaused {
+    function investInInvoice(uint256 id) external payable invoiceExists(id) whenNotPaused nonReentrant {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Fundraising, "Not fundraising");
+        require(block.timestamp <= inv.dueDate, "Invoice expired");
         
         // NEW: Check for private investor restriction
         if (inv.exclusiveInvestor != address(0)) {
@@ -212,7 +229,7 @@ contract InvoiceMarketplace {
         }
     }
 
-    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) whenNotPaused {
+    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) whenNotPaused nonReentrant {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Funded, "Invoice not funded");
 
@@ -224,8 +241,8 @@ contract InvoiceMarketplace {
 
         uint256 fee = (interest * feeBps) / 10_000;
         uint256 amountForInvestors = msg.value - fee;
-
-        _distributeRepayment(id, amountForInvestors);
+        totalRepaid[id] = msg.value;
+        totalRepaidForInvestors[id] = amountForInvestors;
 
         if (fee > 0 && address(stakingRewards) != address(0)) {
             stakingRewards.notifyRewardAmount{value: fee}();
@@ -234,36 +251,45 @@ contract InvoiceMarketplace {
         emit InvoiceRepaid(id, msg.value);
     }
 
-    function _distributeRepayment(uint256 id, uint256 amountForInvestors) internal {
-        address[] storage invs = _investors[id];
-        uint256 len = invs.length;
-        uint256 totalPaidToInvestors;
-        uint256 baseAmount = invoices[id].amount;
+    function claimRepayment(uint256 id) external invoiceExists(id) whenNotPaused nonReentrant {
+        Invoice storage inv = invoices[id];
+        require(inv.status == Status.Repaid, "Invoice not repaid");
 
-        for (uint256 i = 0; i < len; i++) {
-            address investor = invs[i];
-            uint256 principal = investments[id][investor];
-            if (principal == 0) continue;
+        uint256 principal = investments[id][msg.sender];
+        require(principal > 0, "No investment");
 
-            investments[id][investor] = 0;
-            uint256 payout = (amountForInvestors * principal) / baseAmount;
-            totalPaidToInvestors += payout;
+        uint256 amountForInvestors = totalRepaidForInvestors[id];
+        require(amountForInvestors > 0, "No funds");
 
-            (bool sent, ) = investor.call{value: payout}("");
-            require(sent, "Payout failed");
-        }
+        uint256 payout = (amountForInvestors * principal) / inv.amount;
+        investments[id][msg.sender] = 0;
 
-        uint256 dust = amountForInvestors - totalPaidToInvestors;
-        if (dust > 0 && len > 0) {
-            address firstInvestor = invs[0];
-            (bool sentDust, ) = firstInvestor.call{value: dust}("");
-            require(sentDust, "Dust payout failed");
-        }
+        (bool sent, ) = payable(msg.sender).call{value: payout}("");
+        require(sent, "Payout failed");
+
+        emit RepaymentClaimed(id, msg.sender, payout);
+    }
+
+    function claimRefund(uint256 id) external invoiceExists(id) whenNotPaused nonReentrant {
+        Invoice storage inv = invoices[id];
+        require(inv.status == Status.Fundraising, "Not fundraising");
+        require(block.timestamp > inv.dueDate, "Invoice not expired");
+
+        uint256 principal = investments[id][msg.sender];
+        require(principal > 0, "No investment");
+
+        investments[id][msg.sender] = 0;
+        inv.fundedAmount -= principal;
+
+        (bool sent, ) = payable(msg.sender).call{value: principal}("");
+        require(sent, "Refund failed");
+
+        emit RefundClaimed(id, msg.sender, principal);
     }
 
     function markDefaulted(uint256 id) external invoiceExists(id) {
         Invoice storage inv = invoices[id];
-        require(inv.status == Status.Funded || inv.status == Status.Fundraising, "Cannot default");
+        require(inv.status == Status.Funded, "Cannot default");
         require(block.timestamp > inv.dueDate, "Not past due date");
 
         inv.status = Status.Defaulted;

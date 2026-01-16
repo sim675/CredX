@@ -93,13 +93,7 @@ contract StakingRewards is ReentrancyGuard {
     /// @dev msg.value is the new reward amount to be shared among stakers
     function notifyRewardAmount() external payable {
         require(msg.value > 0, "No reward");
-
-        if (totalSupply == 0) {
-            // No stakers yet; funds remain in contract and will be claimable
-            // once someone stakes and more rewards are added.
-            emit RewardsAdded(msg.value);
-            return;
-        }
+        require(totalSupply > 0, "No stakers");
 
         uint256 rewardPerTokenIncrement = (msg.value * 1e18) / totalSupply;
         rewardPerTokenStored += rewardPerTokenIncrement;

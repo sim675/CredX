@@ -37,9 +37,9 @@ export default function BigBuyerOutstandingPage() {
       try {
         setIsLoading(true)
         const buyerInvoices = await fetchInvoicesByBuyer(address)
-        // Filter for outstanding: Fundraising or Funded
+        // Filter for outstanding: Fundraising (2) or Funded (3) in new enum
         const outstanding = buyerInvoices.filter(
-          (inv) => inv.status === 1 || inv.status === 2
+          (inv) => inv.status === 2 || inv.status === 3
         )
         setInvoices(outstanding)
       } catch (error) {
@@ -113,7 +113,7 @@ export default function BigBuyerOutstandingPage() {
       // Reload invoices
       const buyerInvoices = await fetchInvoicesByBuyer(address!)
       const outstanding = buyerInvoices.filter(
-        (inv) => inv.status === 1 || inv.status === 2
+        (inv) => inv.status === 2 || inv.status === 3
       )
       setInvoices(outstanding)
     } catch (error: any) {
@@ -201,7 +201,7 @@ export default function BigBuyerOutstandingPage() {
               <ArrowUpRight className="size-5 text-neutral-600 group-hover:text-orange-400" />
             </div>
             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Fundraising</p>
-            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{invoices.filter((inv) => inv.status === 1).length}</div>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{invoices.filter((inv) => inv.status === 2).length}</div>
             <p className="text-xs text-neutral-500 mt-2">Awaiting funding</p>
           </div>
 
@@ -213,7 +213,7 @@ export default function BigBuyerOutstandingPage() {
               <ArrowUpRight className="size-5 text-neutral-600 group-hover:text-orange-400" />
             </div>
             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Funded</p>
-            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{invoices.filter((inv) => inv.status === 2).length}</div>
+            <div className="text-3xl font-bold tracking-tighter text-white mt-2">{invoices.filter((inv) => inv.status === 3).length}</div>
             <p className="text-xs text-neutral-500 mt-2">Ready to repay</p>
           </div>
         </div>
@@ -261,8 +261,9 @@ export default function BigBuyerOutstandingPage() {
                     {invoices.map((invoice) => {
                       const daysRemaining = calculateDaysRemaining(invoice.dueDate)
                       const statusLabel = getStatusLabel(invoice.status)
-                      const isLate = daysRemaining < 0 && invoice.status === 2
-                      const canRepay = invoice.status === 2
+                      // Late/repay only for funded invoices (status 3 in new enum)
+                      const isLate = daysRemaining < 0 && invoice.status === 3
+                      const canRepay = invoice.status === 3
 
                       return (
                         <TableRow

@@ -32,8 +32,8 @@ export default function BigBuyerHistoryPage() {
       try {
         setIsLoading(true)
         const buyerInvoices = await fetchInvoicesByBuyer(address)
-        // Filter for repaid invoices only (status === 3)
-        const repaid = buyerInvoices.filter((inv) => inv.status === 3)
+        // Filter for repaid invoices only (status === 4 in new enum)
+        const repaid = buyerInvoices.filter((inv) => inv.status === 4)
         setInvoices(repaid)
       } catch (error) {
         console.error(error)

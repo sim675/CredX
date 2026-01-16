@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { InvoiceFilters } from "@/components/marketplace/InvoiceFilters"
+import InvoiceCard from "@/components/marketplace/InvoiceCard"
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -57,7 +58,8 @@ export default function InvoiceMarketplace() {
       try {
         setIsLoading(true)
         const allInvoices = await fetchAllInvoices()
-        const fundraising = allInvoices.filter((inv) => inv.status === 1)
+        // Status 2 == Fundraising in the new enum
+        const fundraising = allInvoices.filter((inv) => inv.status === 2)
 
         const zeroAddress = "0x0000000000000000000000000000000000000000"
         const lowerAddress = address.toLowerCase()
@@ -254,127 +256,9 @@ export default function InvoiceMarketplace() {
               </Card>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-                {filteredPublicInvoices.map((invoice) => {
-                  const daysRemaining = calculateDaysRemaining(invoice.dueDate)
-                  const fundingProgress =
-                    parseFloat(invoice.fundedAmount) / parseFloat(invoice.amount)
-                  const progressPercent = Math.min(fundingProgress * 100, 100)
-
-                  return (
-                    <Card
-                      key={invoice.id}
-                      className="border-border/50 bg-card/50 hover:border-primary/50 transition-colors group"
-                    >
-                      <CardHeader className="pb-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl">Invoice #{invoice.id}</CardTitle>
-                            <CardDescription className="font-mono text-xs">
-                              MSME: {formatAddress(invoice.msme)}
-                            </CardDescription>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <Badge
-                              variant="outline"
-                              className="bg-primary/10 text-primary border-primary/20"
-                            >
-                              {getStatusLabel(invoice.status)}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              Public
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Face Value</p>
-                            <p className="text-lg font-bold">
-                              {parseFloat(invoice.amount).toFixed(2)} MATIC
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Yield</p>
-                            <p className="text-lg font-bold text-green-500">
-                              {parseFloat(invoice.interestRate || "0").toFixed(1)}%
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Funded</p>
-                            <p className="text-lg font-bold">{progressPercent.toFixed(1)}%</p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Term</p>
-                            <p className="text-lg font-bold">{daysRemaining}d</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>Funding Progress</span>
-                              <span>{progressPercent.toFixed(1)}%</span>
-                            </div>
-                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary transition-all"
-                                style={{ width: `${progressPercent}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <Landmark className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">Buyer:</span>
-                              <span>{formatAddress(invoice.buyer)}</span>
-                              {(invoice as any).buyerVerified && (
-                                <Badge variant="outline" className="text-xs h-5 px-1.5">
-                                  Verified
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                            className="w-full"
-                            title="View detailed invoice information and the uploaded PDF"
-                          >
-                            <Link
-                              href={`/dashboard/investor/marketplace/${invoice.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-2"
-                            >
-                              <FileText className="size-3.5" />
-                              View Original Invoice
-                              <ExternalLink className="size-3" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="pt-0">
-                        <Button className="w-full group-hover:bg-primary/90 transition-colors" asChild>
-                          <Link
-                            href={`/dashboard/investor/invest/${invoice.id}`}
-                            className="flex items-center justify-center gap-2"
-                          >
-                            Invest Now{" "}
-                            <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                          </Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  )
-                })}
+                {filteredPublicInvoices.map((invoice) => (
+                  <InvoiceCard key={invoice.id} invoice={invoice} />
+                ))}
               </div>
             )}
           </div>
@@ -388,130 +272,9 @@ export default function InvoiceMarketplace() {
                 </Badge>
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-                {filteredPrivateInvoices.map((invoice) => {
-                  const daysRemaining = calculateDaysRemaining(invoice.dueDate)
-                  const fundingProgress =
-                    parseFloat(invoice.fundedAmount) / parseFloat(invoice.amount)
-                  const progressPercent = Math.min(fundingProgress * 100, 100)
-
-                  return (
-                    <Card
-                      key={invoice.id}
-                      className="border-border/50 bg-card/50 hover:border-primary/50 transition-colors group"
-                    >
-                      <CardHeader className="pb-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl">Invoice #{invoice.id}</CardTitle>
-                            <CardDescription className="font-mono text-xs">
-                              MSME: {formatAddress(invoice.msme)}
-                            </CardDescription>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <Badge
-                              variant="outline"
-                              className="bg-primary/10 text-primary border-primary/20"
-                            >
-                              {getStatusLabel(invoice.status)}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs border-destructive text-destructive">
-                              Private
-                            </Badge>
-                            <span className="text-[10px] text-muted-foreground">
-                              Exclusive Deal
-                            </span>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Face Value</p>
-                            <p className="text-lg font-bold">
-                              {parseFloat(invoice.amount).toFixed(2)} MATIC
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Yield</p>
-                            <p className="text-lg font-bold text-green-500">
-                              {parseFloat(invoice.interestRate || "0").toFixed(1)}%
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Funded</p>
-                            <p className="text-lg font-bold">{progressPercent.toFixed(1)}%</p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-background/50 border border-border/50">
-                            <p className="text-xs text-muted-foreground mb-1">Term</p>
-                            <p className="text-lg font-bold">{daysRemaining}d</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>Funding Progress</span>
-                              <span>{progressPercent.toFixed(1)}%</span>
-                            </div>
-                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary transition-all"
-                                style={{ width: `${progressPercent}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <Landmark className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">Buyer:</span>
-                              <span>{formatAddress(invoice.buyer)}</span>
-                              {(invoice as any).buyerVerified && (
-                                <Badge variant="outline" className="text-xs h-5 px-1.5">
-                                  Verified
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                            className="w-full"
-                            title="View detailed invoice information and the uploaded PDF"
-                          >
-                            <Link
-                              href={`/dashboard/investor/marketplace/${invoice.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-2"
-                            >
-                              <FileText className="size-3.5" />
-                              View Original Invoice
-                              <ExternalLink className="size-3" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="pt-0">
-                        <Button className="w-full group-hover:bg-primary/90 transition-colors" asChild>
-                          <Link
-                            href={`/dashboard/investor/invest/${invoice.id}`}
-                            className="flex items-center justify-center gap-2"
-                          >
-                            Invest Now{" "}
-                            <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                          </Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  )
-                })}
+                {filteredPrivateInvoices.map((invoice) => (
+                  <InvoiceCard key={invoice.id} invoice={invoice} />
+                ))}
               </div>
             </div>
           )}

@@ -61,7 +61,8 @@ export default function InvestorDashboard() {
     (sum, amount) => sum + parseFloat(amount),
     0
   )
-  const activeInvestments = portfolioInvoices.filter((inv) => inv.status === 1 || inv.status === 2)
+  // Active = fundraising or funded in the new enum (2: Fundraising, 3: Funded)
+  const activeInvestments = portfolioInvoices.filter((inv) => inv.status === 2 || inv.status === 3)
 
   const portfolioStats = [
     { label: "Total Deployed", value: `${totalDeployed.toFixed(2)} MATIC`, icon: DollarSign, color: "text-primary" },

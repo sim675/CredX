@@ -11,6 +11,7 @@ import { TrendingUp, Clock, CheckCircle2, Wallet, FileText, ExternalLink } from 
 import { fetchAllInvoices, fetchInvestmentAmount, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import InvoiceCard from "@/components/marketplace/InvoiceCard"
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -61,7 +62,8 @@ export default function InvestorPortfolioPage() {
 
   // Filter invoices where user has investments
   const portfolioInvoices = allInvoices.filter((inv) => investments[inv.id])
-  const activeInvestments = portfolioInvoices.filter((inv) => inv.status === 1 || inv.status === 2)
+  // Active = fundraising or funded in the new enum (2: Fundraising, 3: Funded)
+  const activeInvestments = portfolioInvoices.filter((inv) => inv.status === 2 || inv.status === 3)
 
   // Calculate stats from blockchain data
   const totalDeployed = Object.values(investments).reduce(
@@ -153,12 +155,31 @@ export default function InvestorPortfolioPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {portfolioInvoices.filter((inv) => inv.status === 3 || inv.status === 4).length}
+              {portfolioInvoices.filter((inv) => inv.status === 4 || inv.status === 5).length}
             </div>
             <p className="text-xs text-muted-foreground">Completed</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Action Center: show invoices with potential on-chain actions using InvoiceCard */}
+      {portfolioInvoices.length > 0 && (
+        <Card className="border-border/50 bg-card/50">
+          <CardHeader>
+            <CardTitle>Action Center</CardTitle>
+            <CardDescription>
+              Invoices you can currently interact with (invested, fundraising, repaid, or refundable).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {portfolioInvoices.map((invoice) => (
+                <InvoiceCard key={invoice.id} invoice={invoice} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-border/50">
         <CardHeader>
@@ -195,7 +216,8 @@ export default function InvestorPortfolioPage() {
                 {portfolioInvoices.map((invoice) => {
                   const daysRemaining = calculateDaysRemaining(invoice.dueDate)
                   const statusLabel = getStatusLabel(invoice.status)
-                  const isLate = daysRemaining < 0 && invoice.status === 2
+                  // Late = past due while still funded (status 3 in new enum)
+                  const isLate = daysRemaining < 0 && invoice.status === 3
 
                   return (
                     <TableRow key={invoice.id}>

@@ -55,9 +55,10 @@ export default function InvestorReturnsPage() {
 
   // Filter invoices where user has investments and are settled (Repaid or Defaulted)
   const portfolioInvoices = allInvoices.filter((inv) => investments[inv.id])
-  const settledInvestments = portfolioInvoices.filter((inv) => inv.status === 3 || inv.status === 4)
-  const repaidInvestments = settledInvestments.filter((inv) => inv.status === 3)
-  const defaultedInvestments = settledInvestments.filter((inv) => inv.status === 4)
+  // In new enum: 4 = Repaid, 5 = Defaulted
+  const settledInvestments = portfolioInvoices.filter((inv) => inv.status === 4 || inv.status === 5)
+  const repaidInvestments = settledInvestments.filter((inv) => inv.status === 4)
+  const defaultedInvestments = settledInvestments.filter((inv) => inv.status === 5)
 
   // Calculate stats from blockchain data
   const totalPrincipalDeployed = settledInvestments.reduce(

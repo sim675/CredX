@@ -17,7 +17,8 @@ export interface Invoice {
   amount: string; // in MATIC
   fundedAmount: string; // in MATIC
   dueDate: Date;
-  status: number; // 1: Fundraising, 2: Funded, 3: Repaid, 4: Defaulted
+  // On-chain enum: 0: None, 1: PendingBuyer, 2: Fundraising, 3: Funded, 4: Repaid, 5: Defaulted
+  status: number;
   metadataURI: string;
   interestRate: string; // PERSON A: Added to match UI page.tsx expectations
   buyerVerified: boolean; // PERSON A: Added for UI badges
@@ -28,16 +29,24 @@ export interface Invoice {
   isPrivate: boolean;
 }
 
-export type InvoiceStatus = "Fundraising" | "Funded" | "Repaid" | "Defaulted";
+export type InvoiceStatus =
+  | "None"
+  | "PendingBuyer"
+  | "Fundraising"
+  | "Funded"
+  | "Repaid"
+  | "Defaulted";
 
 export function getStatusLabel(status: number): InvoiceStatus {
   const statusMap: Record<number, InvoiceStatus> = {
-    1: "Fundraising",
-    2: "Funded",
-    3: "Repaid",
-    4: "Defaulted",
+    0: "None",
+    1: "PendingBuyer",
+    2: "Fundraising",
+    3: "Funded",
+    4: "Repaid",
+    5: "Defaulted",
   };
-  return statusMap[status] || "Fundraising";
+  return statusMap[status] || "None";
 }
 
 export function calculateDaysRemaining(dueDate: Date): number {
@@ -148,11 +157,68 @@ export async function fetchInvoicesByBuyer(
 export async function fetchFundraisingInvoices(): Promise<Invoice[]> {
   try {
     const allInvoices = await fetchAllInvoices();
-    return allInvoices.filter((inv) => inv.status === 1);
+    // Status 2 == Fundraising in the new enum
+    return allInvoices.filter((inv) => inv.status === 2);
   } catch (error) {
     console.error("Error fetching fundraising invoices:", error);
     throw new Error("Failed to fetch invoices from blockchain");
   }
+}
+
+// --- UI helpers for actions based on role & status ---
+
+export type InvoiceUserRole = "msme" | "investor" | "bigbuyer";
+
+export type InvoiceAction =
+  | "NONE"
+  | "WAITING_FOR_CONFIRMATION"
+  | "CAN_CONFIRM"
+  | "OPEN_FOR_INVESTMENT"
+  | "READY_TO_CLAIM_REPAYMENT"
+  | "READY_TO_CLAIM_REFUND";
+
+/**
+ * Derives the primary action available for a user on a given invoice
+ * based on their role, whether they are the buyer, whether they have
+ * already invested, and whether the invoice has expired.
+ */
+export function getInvoiceAction(params: {
+  role: InvoiceUserRole;
+  invoice: Invoice;
+  isBuyer: boolean;
+  hasInvestment: boolean;
+  isExpired: boolean;
+}): InvoiceAction {
+  const { role, invoice, isBuyer, hasInvestment, isExpired } = params;
+  const status = invoice.status;
+
+  // Pending buyer confirmation
+  if (status === 1) {
+    if (role === "bigbuyer" && isBuyer) {
+      return "CAN_CONFIRM";
+    }
+    return "WAITING_FOR_CONFIRMATION";
+  }
+
+  // Fundraising
+  if (status === 2) {
+    // Open for new investments while not expired
+    if (role === "investor" && !isExpired) {
+      return "OPEN_FOR_INVESTMENT";
+    }
+
+    // After expiry, investors with principal can claim refund
+    if (role === "investor" && isExpired && hasInvestment) {
+      return "READY_TO_CLAIM_REFUND";
+    }
+  }
+
+  // Repaid invoices: investors with principal still recorded can claim
+  if (status === 4 && role === "investor" && hasInvestment) {
+    return "READY_TO_CLAIM_REPAYMENT";
+  }
+
+  return "NONE";
 }
 
 // Fetch investment amount for a specific invoice and investor

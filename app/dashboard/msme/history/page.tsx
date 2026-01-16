@@ -67,9 +67,9 @@ export default function MSMEHistoryPage() {
       try {
         setIsLoading(true)
         const msmeInvoices = await fetchInvoicesByMSME(address, publicClient || undefined)
-        // Filter for settled invoices: Repaid (3) or Defaulted (4)
+        // Filter for settled invoices: Repaid (4) or Defaulted (5)
         const settledInvoices = msmeInvoices.filter(
-          (inv) => inv.status === 3 || inv.status === 4
+          (inv) => inv.status === 4 || inv.status === 5
         )
         setInvoices(settledInvoices)
       } catch (error) {
@@ -93,10 +93,10 @@ export default function MSMEHistoryPage() {
     (sum, inv) => sum + parseFloat(inv.fundedAmount),
     0
   )
-  const repaidInvoices = invoices.filter((inv) => inv.status === 3)
+  const repaidInvoices = invoices.filter((inv) => inv.status === 4)
   const onTimeCount = repaidInvoices.length 
   const onTimeRate = totalSettled > 0 ? Math.round((onTimeCount / totalSettled) * 100) : 0
-  const defaultedCount = invoices.filter((inv) => inv.status === 4).length
+  const defaultedCount = invoices.filter((inv) => inv.status === 5).length
   
   // Calculate default rate for the progress bar
   const defaultRate = totalSettled > 0 ? Math.round((defaultedCount / totalSettled) * 100) : 0
@@ -287,8 +287,8 @@ export default function MSMEHistoryPage() {
               <TableBody>
                 {invoices.map((invoice) => {
                   const statusLabel = getStatusLabel(invoice.status)
-                  const isRepaid = invoice.status === 3
-                  const isDefaulted = invoice.status === 4
+                  const isRepaid = invoice.status === 4
+                  const isDefaulted = invoice.status === 5
 
                   return (
                     <TableRow key={invoice.id} className="border-white/5 hover:bg-white/5 transition-colors">

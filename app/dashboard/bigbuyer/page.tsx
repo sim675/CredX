@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, Users, Award, Shield, Calendar, DollarSign, ArrowUpRight } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
+import InvoiceCard from "@/components/marketplace/InvoiceCard"
 import { useToast } from "@/components/ui/use-toast"
 
 function formatAddress(addr: string) {
@@ -49,7 +50,9 @@ export default function BigBuyerDashboard() {
 
   const totalInvoices = invoices.length
   const approvedInvoices = invoices.filter(inv => inv.status >= 1).length
-  const paidInvoices = invoices.filter(inv => inv.status === 3).length
+  // In new enum: 4 = Repaid
+  const paidInvoices = invoices.filter(inv => inv.status === 4).length
+
   const onTimePaymentRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0
   const uniqueMSMEs = [...new Set(invoices.map(inv => inv.msme))].length
   
@@ -60,7 +63,8 @@ export default function BigBuyerDashboard() {
   }
 
   const trustBadge = getTrustBadge()
-  const pendingApprovals = invoices.filter(inv => inv.status === 0 || inv.status === 1)
+  // Pending buyer confirmation: status 1 = PendingBuyer in new enum
+  const pendingApprovals = invoices.filter(inv => inv.status === 1)
 
   if (isLoading) {
     return (
@@ -143,21 +147,9 @@ export default function BigBuyerDashboard() {
                   <p className="text-lg font-medium">All caught up! No pending tasks.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   {pendingApprovals.map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-orange-500/20 transition-all group">
-                       <div className="flex items-center gap-4">
-                          <div className="size-12 rounded-xl bg-orange-600/20 flex items-center justify-center font-bold text-orange-500">#</div>
-                          <div>
-                            <p className="font-bold text-white leading-none mb-1">{parseFloat(inv.amount).toFixed(2)} MATIC</p>
-                            <p className="text-xs text-neutral-500">{formatAddress(inv.msme)} • Due {formatDate(inv.dueDate)}</p>
-                          </div>
-                       </div>
-                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button size="sm" className="bg-white text-black hover:bg-orange-500 hover:text-white rounded-full px-6 transition-all">Approve</Button>
-                          <Button size="icon" variant="ghost" className="rounded-full text-neutral-500 hover:text-red-500 hover:bg-red-500/10"><XCircle className="size-5" /></Button>
-                       </div>
-                    </div>
+                    <InvoiceCard key={inv.id} invoice={inv} />
                   ))}
                 </div>
               )}
