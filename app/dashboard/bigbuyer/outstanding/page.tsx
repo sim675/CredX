@@ -2,16 +2,24 @@
 
 import { useEffect, useState } from "react"
 import { useAccount, useWalletClient } from "wagmi"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Eye, CreditCard, Wallet, FileText, DollarSign, Clock, CheckCircle2, ArrowUpRight,ExternalLink } from "lucide-react"
+import { CreditCard, Wallet, FileText, DollarSign, Clock, CheckCircle2, ArrowUpRight, ExternalLink } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
 import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json"
+// 1. Import the font
+import { Press_Start_2P } from "next/font/google"
+
+// 2. Configure the font
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"] 
+})
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string
 
@@ -85,7 +93,7 @@ export default function BigBuyerOutstandingPage() {
       const tenThousand = BigInt(10000)
       const totalOwedWei = principalWei + (principalWei * discountRateBps) / tenThousand
 
-      const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei,gasLimit: 300000 })
+      const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei })
       await tx.wait()
 
       if (address) {
@@ -166,16 +174,25 @@ export default function BigBuyerOutstandingPage() {
     )
   }
   return (
-    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white selection:bg-orange-500/30">
+    // FIX 1: Changed overflow-hidden to overflow-x-hidden to prevent cutting off bottom content
+    <div className="min-h-screen bg-transparent relative text-white selection:bg-orange-500/30">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        {/* Background image with low opacity */}
+        <div className="absolute inset-0 w-full h-full">
+          <img src="/bitcoin.jpeg" alt="bitcoin background" className="w-full h-full object-cover opacity-10" />
+        </div>
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
       </div>
 
-      <main className="relative z-10 p-6 space-y-8">
+      {/* FIX 2: Added pb-20 (padding-bottom) so scrolling goes all the way down */}
+      <main className="relative z-10 p-6 space-y-8 pb-20 overflow-visible">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Outstanding Invoices</h1>
-          <p className="text-neutral-500 font-medium mt-1">View and pay invoices owed to MSMEs</p>
+          {/* 3. Applied the font here */}
+          <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
+            Outstanding Invoices
+          </h1>
+          <p className="text-neutral-500 font-medium mt-2">View and pay invoices owed to MSMEs</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -228,6 +245,7 @@ export default function BigBuyerOutstandingPage() {
           </div>
 
           <div>
+             
             <p className="text-orange-400 font-bold mb-2">Outstanding Summary</p>
             <p className="text-neutral-500">
               Total outstanding: {totalOutstanding.toFixed(2)} MATIC across {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
@@ -244,10 +262,11 @@ export default function BigBuyerOutstandingPage() {
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border border-orange-500/10 bg-black/20 overflow-hidden">
+              // FIX 3: Changed bg-black/20 to bg-white/[0.02] (glassy) to see the background blobs
+              <div className="rounded-lg border border-orange-500/10 bg-white/[0.02] overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b border-orange-500/20">
+                    <TableRow className="border-b border-orange-500/20 hover:bg-white/[0.02]">
                       <TableHead className="text-orange-300">Invoice ID</TableHead>
                       <TableHead className="text-orange-300">MSME Address</TableHead>
                       <TableHead className="text-orange-300 text-right">Invoice Amount</TableHead>
@@ -268,7 +287,8 @@ export default function BigBuyerOutstandingPage() {
                       return (
                         <TableRow
                           key={invoice.id}
-                          className="border-b border-orange-500/10 hover:bg-black/30 transition-colors"
+                          // FIX 4: Changed hover state to a lighter white opacity for glass effect
+                          className="border-b border-orange-500/10 hover:bg-white/[0.05] transition-colors"
                         >
                           <TableCell className="font-medium font-mono text-xs text-white">#{invoice.id}</TableCell>
                           <TableCell className="font-mono text-xs text-orange-200">{formatAddress(invoice.msme)}</TableCell>

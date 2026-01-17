@@ -6,19 +6,19 @@ import { useAccount } from "wagmi"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Clock, AlertCircle, TrendingUp, Users, Award, Shield, Calendar, DollarSign, ArrowUpRight } from "lucide-react"
-import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
+import { CheckCircle, TrendingUp, Users, Award, ArrowUpRight } from "lucide-react"
+import { fetchInvoicesByBuyer, Invoice } from "@/lib/invoice"
 import InvoiceCard from "@/components/marketplace/InvoiceCard"
 import { useToast } from "@/components/ui/use-toast"
+import { Press_Start_2P } from "next/font/google"
+
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"] 
+})
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}` 
-}
-
-function formatDate(timestamp: any) {
-    if (!timestamp) return "N/A"
-    const date = new Date(Number(timestamp) * 1000) 
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export default function BigBuyerDashboard() {
@@ -53,7 +53,6 @@ export default function BigBuyerDashboard() {
 
   const totalInvoices = invoices.length
   const approvedInvoices = invoices.filter(inv => inv.status >= 1).length
-  // In new enum: 4 = Repaid
   const paidInvoices = invoices.filter(inv => inv.status === 4).length
 
   const onTimePaymentRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0
@@ -66,36 +65,47 @@ export default function BigBuyerDashboard() {
   }
 
   const trustBadge = getTrustBadge()
-  // Pending buyer confirmation: status 1 = PendingBuyer in new enum
   const pendingApprovals = invoices.filter(inv => inv.status === 1)
+
+  // Separated Background Component to handle the visual stack (NO BLACK OVERLAY)
+  const Background = () => (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      {/* Background image with low opacity */}
+      <div className="absolute inset-0 w-full h-full">
+        <img src="/bitcoin.jpeg" alt="bitcoin background" className="w-full h-full object-cover opacity-10" />
+      </div>
+      {/* Bottom right yellow blob */}
+      <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+      {/* Center very light orange blob */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
+    </div>
+  )
 
   if (isLoading) {
     return (
-      <div className="p-8 space-y-6 bg-[#080808] min-h-screen">
-        <Skeleton className="h-10 w-1/4 bg-white/5" />
-        <div className="grid grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-2xl bg-white/5" />)}
+      <div className="relative min-h-screen">
+        <Background />
+        <div className="relative z-10 p-8 space-y-6">
+          <Skeleton className="h-10 w-1/4 bg-white/5" />
+          <div className="grid grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-2xl bg-white/5" />)}
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white selection:bg-orange-500/30">
-      {/* Background Ambient Glows */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
-      </div>
-
-      <main className="relative z-10 max-w-[1600px] mx-auto p-8 space-y-10">
-        {/* Header Section */}
+    <div className="min-h-screen bg-transparent relative text-white selection:bg-orange-500/30">
+      <Background />
+      {/* Main content remains unchanged, but now the sidebar will always be visible without a black overlay. */}
+      <main className="relative z-10 max-w-[1600px] mx-auto p-8 space-y-10 pb-20 overflow-visible">
         <header className="flex justify-between items-end">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-white uppercase italic">
+            <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
               Invoice Responsibility and Trust Manager
             </h1>
-            <p className="text-neutral-500 font-medium mt-1">Real-time reputation & invoice analytics</p>
+            <p className="text-neutral-500 font-medium mt-2">Real-time reputation & invoice analytics</p>
           </div>
           <div className="flex gap-3">
              <Button variant="outline" className="bg-white/5 border-white/10 backdrop-blur-md hover:bg-white/10">Export Data</Button>
@@ -111,7 +121,6 @@ export default function BigBuyerDashboard() {
           </section>
         )}
 
-        {/* Top 4 Stat Cards */}
         <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Approved Invoices", value: approvedInvoices, icon: CheckCircle, sub: `${totalInvoices} Total` },
@@ -141,7 +150,6 @@ export default function BigBuyerDashboard() {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Approval Panel */}
           <section className="lg:col-span-2 space-y-6">
             <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-2xl">
               <div className="flex items-center justify-between mb-8">
@@ -167,7 +175,6 @@ export default function BigBuyerDashboard() {
             </div>
           </section>
 
-          {/* Sidebar Area: MSME Relationships & Schedule */}
           <aside className="space-y-8">
              <div className="p-6 rounded-[2rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2">

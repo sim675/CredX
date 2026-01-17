@@ -11,6 +11,14 @@ import { CheckCircle2, Wallet, FileText, ExternalLink } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
+// 1. Import the font
+import { Press_Start_2P } from "next/font/google"
+
+// 2. Configure the font
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"] 
+})
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -92,25 +100,30 @@ export default function BigBuyerHistoryPage() {
     )
   }
 
-
-
-
-
-
   return (
-    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white selection:bg-orange-500/30">
+    // FIX 1: Changed overflow-hidden to overflow-x-hidden
+    <div className="min-h-screen bg-transparent relative text-white selection:bg-orange-500/30">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        {/* Background image with low opacity */}
+        <div className="absolute inset-0 w-full h-full">
+          <img src="/bitcoin.jpeg" alt="bitcoin background" className="w-full h-full object-cover opacity-10" />
+        </div>
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
       </div>
 
-      <main className="relative z-10 p-6 space-y-8">
+      {/* FIX 2: Added pb-20 (padding bottom) so scrolling reveals all content */}
+      <main className="relative z-10 p-6 space-y-8 pb-20 overflow-visible">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Payment History</h1>
-          <p className="text-neutral-500 font-medium mt-1">Complete record of all invoice payments</p>
+          {/* 3. Applied the font here */}
+          <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
+            Payment History
+          </h1>
+          <p className="text-neutral-500 font-medium mt-2">Complete record of all invoice payments</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
+          {/* Top Cards: Kept bg-white/[0.03] for glass effect */}
           <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex justify-between items-start mb-6">
               <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
@@ -149,6 +162,7 @@ export default function BigBuyerHistoryPage() {
           </div>
         </div>
 
+        {/* Main Table Container: Changed to bg-white/[0.03] to see the glow */}
         <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] p-8">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -175,10 +189,11 @@ export default function BigBuyerHistoryPage() {
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border border-orange-500/10 bg-black/20 overflow-hidden">
+              // FIX 3: Changed inner table bg from bg-black/20 to transparent/glass
+              <div className="rounded-lg border border-orange-500/10 bg-white/[0.02] overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b border-orange-500/20">
+                    <TableRow className="border-b border-orange-500/20 hover:bg-white/[0.02]">
                       <TableHead className="text-orange-300">Invoice ID</TableHead>
                       <TableHead className="text-orange-300">MSME Address</TableHead>
                       <TableHead className="text-orange-300 text-right">Amount Paid</TableHead>
@@ -189,7 +204,7 @@ export default function BigBuyerHistoryPage() {
                   </TableHeader>
                   <TableBody>
                     {invoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="border-b border-orange-500/10 hover:bg-black/30 transition-colors">
+                      <TableRow key={invoice.id} className="border-b border-orange-500/10 hover:bg-white/[0.05] transition-colors">
                         <TableCell className="font-medium font-mono text-xs text-white">#{invoice.id}</TableCell>
                         <TableCell className="font-mono text-xs text-orange-200">{formatAddress(invoice.msme)}</TableCell>
                         <TableCell className="text-right font-semibold text-white">
