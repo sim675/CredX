@@ -37,9 +37,11 @@ export default function GovernanceStakingPage() {
       return
     }
 
-    const loadData = async () => {
+    const loadData = async (showLoading: boolean = false) => {
       try {
-        setIsLoading(true)
+        if (showLoading) {
+          setIsLoading(true)
+        }
         setError(null)
         const tokenContractInstance = getTokenContract()
         const stakingContractInstance = getStakingContract()
@@ -65,13 +67,17 @@ export default function GovernanceStakingPage() {
           variant: "destructive",
         })
       } finally {
-        setIsLoading(false)
+        if (showLoading) {
+          setIsLoading(false)
+        }
       }
     }
 
-    loadData()
+    loadData(true)
     // Refresh every 10 seconds
-    const interval = setInterval(loadData, 10000)
+    const interval = setInterval(() => {
+      loadData(false)
+    }, 10000)
     return () => clearInterval(interval)
   }, [isConnected, address, tokenAddress, getTokenContract, getStakingContract, toast])
 
