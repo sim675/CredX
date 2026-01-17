@@ -162,7 +162,7 @@ export default function DashboardLayout({
             </div>
           )}
 
-          {/* 4. MAIN: flex-1 takes remaining space, overflow-y-auto enables the scrollbar here. */}
+          {/* 4. MAIN: flex-1 takes remaining space, overflow-y-auto enables vertical scrolling. */}
           <main className={`flex-1 flex flex-col gap-4 p-4 md:p-8 bg-transparent overflow-y-auto relative z-10 ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
             {children}
           </main>

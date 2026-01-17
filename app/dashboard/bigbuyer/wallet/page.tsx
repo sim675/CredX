@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
 import { useAccount, useBalance } from "wagmi"
 import { formatEther } from "viem"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Wallet, ExternalLink, Copy, Check, TrendingUp, ArrowUpRight } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
+// 1. Import the font
+import { Press_Start_2P } from "next/font/google"
+
+// 2. Configure the font
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"] 
+})
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -94,20 +101,28 @@ export default function BigBuyerWalletPage() {
   }
 
   const polygonScanUrl = `https://amoy.polygonscan.com/address/${address}`
+  
   return (
-    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white">
-      {/* Background Ambient Glows */}
+    // FIX 1: Changed overflow-hidden to overflow-x-hidden to prevent vertical clipping
+    <div className="min-h-screen bg-transparent relative text-white">
+      {/* Background Ambient Glows (no black overlay) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        {/* Background image with low opacity */}
+        <div className="absolute inset-0 w-full h-full">
+          <img src="/bitcoin.jpeg" alt="bitcoin background" className="w-full h-full object-cover opacity-10" />
+        </div>
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
       </div>
 
-      <main className="relative z-10 p-6 space-y-8">
+      {/* FIX 2: Added pb-20 (bottom padding) so the last card isn't cut off when scrolling */}
+      <main className="relative z-10 p-6 space-y-8 pb-20 overflow-visible">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">
+          {/* 3. Applied the font here */}
+          <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
             Wallet & Payments
           </h1>
-          <p className="text-neutral-500 font-medium mt-1">Manage your payment wallet and transaction history</p>
+          <p className="text-neutral-500 font-medium mt-2">Manage your payment wallet and transaction history</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -186,7 +201,7 @@ export default function BigBuyerWalletPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+          <Card className="bg-white/[0.03] backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Total Paid</CardTitle>
               <Check className="size-4 text-[#FFD600]" />
@@ -199,7 +214,7 @@ export default function BigBuyerWalletPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+          <Card className="bg-white/[0.03] backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Outstanding</CardTitle>
               <Wallet className="size-4 text-[#FFD600]" />
@@ -212,7 +227,7 @@ export default function BigBuyerWalletPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+          <Card className="bg-white/[0.03] backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Avg Payment Size</CardTitle>
               <TrendingUp className="size-4 text-[#FFD600]" />
@@ -229,7 +244,7 @@ export default function BigBuyerWalletPage() {
           </Card>
         </div>
 
-        <Card className="bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
+        <Card className="bg-white/[0.03] backdrop-blur-md border border-orange-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,77,0,0.05)] hover:shadow-[0_0_30px_rgba(255,77,0,0.15)] transition-all duration-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-[#FFD600]" />

@@ -9,6 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Award, TrendingUp, Clock, CheckCircle2, Wallet, FileText } from "lucide-react"
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
+import { Press_Start_2P } from "next/font/google"
+
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"] 
+})
 
 export default function BigBuyerReputationPage() {
   const { address, isConnected } = useAccount()
@@ -83,20 +89,20 @@ export default function BigBuyerReputationPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 bg-[#080808] min-h-screen p-6">
         <div>
-          <Skeleton className="h-9 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
+          <Skeleton className="h-9 w-64 mb-2 bg-white/5" />
+          <Skeleton className="h-5 w-96 bg-white/5" />
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {[...Array(2)].map((_, i) => (
-            <Card key={i} className="border-border/50">
+            <Card key={i} className="border-white/10 bg-white/[0.02]">
               <CardHeader>
-                <Skeleton className="h-6 w-48 mb-2" />
-                <Skeleton className="h-4 w-64" />
+                <Skeleton className="h-6 w-48 mb-2 bg-white/5" />
+                <Skeleton className="h-4 w-64 bg-white/5" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full bg-white/5" />
               </CardContent>
             </Card>
           ))}
@@ -106,20 +112,28 @@ export default function BigBuyerReputationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white selection:bg-orange-500/30">
+    // 1. Reverted to #080808 so the background isn't pure black
+    <div className="min-h-screen bg-transparent relative text-white selection:bg-orange-500/30">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/25 blur-[120px] rounded-full" />
+        {/* Background image with low opacity */}
+        <div className="absolute inset-0 w-full h-full">
+          <img src="/bitcoin.jpeg" alt="bitcoin background" className="w-full h-full object-cover opacity-10" />
+        </div>
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[40%] bg-yellow-600/15 blur-[100px] rounded-full" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
       </div>
 
-      <main className="relative z-10 p-6 space-y-8">
+      <main className="relative z-10 p-6 space-y-8 pb-20 overflow-visible">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Reputation</h1>
-          <p className="text-neutral-500 font-medium mt-1">Your on-chain payment reliability and trust score</p>
+          <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
+            Reputation
+          </h1>
+          <p className="text-neutral-500 font-medium mt-2">Your on-chain payment reliability and trust score</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          {/* 2. Glass Cards: Changed to bg-white/[0.03] for clear glass look (not black) */}
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex justify-between items-start mb-6">
               <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
                 <Award className="size-6 text-orange-500" />
@@ -132,7 +146,7 @@ export default function BigBuyerReputationPage() {
               <p className="text-3xl font-extrabold text-white">{reputationScore}</p>
               <p className="text-xs text-muted-foreground">out of 1000</p>
             </div>
-            <Progress value={(reputationScore / 1000) * 100} className="h-3 mt-4" />
+            <Progress value={(reputationScore / 1000) * 100} className="h-3 mt-4 bg-white/10" />
             <p className="text-sm text-orange-300 mt-2">
               {totalInvoices === 0
                 ? "No invoices yet"
@@ -140,7 +154,7 @@ export default function BigBuyerReputationPage() {
             </p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex justify-between items-start mb-6">
               <div className="p-3 rounded-2xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
                 <TrendingUp className="size-6 text-orange-500" />
@@ -167,7 +181,7 @@ export default function BigBuyerReputationPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mt-6">
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Payment Success Rate</CardTitle>
               <CheckCircle2 className="size-4 text-[#FFD600]" />
@@ -178,7 +192,7 @@ export default function BigBuyerReputationPage() {
             </p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Total Invoices</CardTitle>
               <FileText className="size-4 text-[#FFD600]" />
@@ -187,7 +201,7 @@ export default function BigBuyerReputationPage() {
             <p className="text-xs text-muted-foreground mt-2">All-time received</p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">Repaid</CardTitle>
               <TrendingUp className="size-4 text-[#FFD600]" />
@@ -196,7 +210,7 @@ export default function BigBuyerReputationPage() {
             <p className="text-xs text-muted-foreground mt-2">Successfully paid</p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] group p-8">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-400">MSMEs Served</CardTitle>
               <Award className="size-4 text-[#FFD600]" />
@@ -206,7 +220,7 @@ export default function BigBuyerReputationPage() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] p-8 mt-6">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-xl transition-all duration-300 hover:border-orange-500/50 hover:bg-white/[0.05] hover:shadow-[0_0_30px_rgba(234,88,12,0.15)] p-8 mt-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="size-2 rounded-full bg-orange-500 shadow-[0_0_10px_orange]" />
@@ -231,26 +245,26 @@ export default function BigBuyerReputationPage() {
               </div>
             ) : (
               <>
-                <div>
+                <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-orange-200">Payment Success Rate</span>
                     <span className="text-sm font-semibold text-white">{onTimeRate}%</span>
                   </div>
-                  <Progress value={onTimeRate} className="h-3" />
+                  <Progress value={onTimeRate} className="h-3 bg-white/10" />
                 </div>
-                <div>
+                <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-orange-200">Total Invoices</span>
                     <span className="text-sm font-semibold text-white">{totalInvoices}</span>
                   </div>
-                  <Progress value={Math.min((totalInvoices / 100) * 100, 100)} className="h-3" />
+                  <Progress value={Math.min((totalInvoices / 100) * 100, 100)} className="h-3 bg-white/10" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-orange-200">Reputation Score</span>
                     <span className="text-sm font-semibold text-white">{reputationScore}/1000</span>
                   </div>
-                  <Progress value={(reputationScore / 1000) * 100} className="h-3" />
+                  <Progress value={(reputationScore / 1000) * 100} className="h-3 bg-white/10" />
                 </div>
               </>
             )}
