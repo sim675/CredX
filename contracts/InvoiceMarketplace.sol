@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.26;
 
 import "./InvoiceNFT.sol";
-import "./StakingRewards.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title InvoiceMarketplace for MSMEs, investors, and big buyers on Polygon
-/// @notice Simple invoice financing marketplace using native MATIC
-contract InvoiceMarketplace is ReentrancyGuard {
+/// @notice Invoice financing marketplace using native MATIC/POL
+/// @dev Gas-optimized with custom errors and unchecked math
+contract InvoiceMarketplace {
     enum Status {
         None,
         PendingBuyer,
@@ -21,30 +20,27 @@ contract InvoiceMarketplace is ReentrancyGuard {
         uint256 id;
         address msme;
         address buyer;
-        uint256 amount; // total invoice amount in wei (MATIC)
-        uint256 fundedAmount; // how much investors have funded so far
-        uint256 dueDate; // unix timestamp
-        uint256 discountRate; // in basis points, e.g. 100 = 1%
+        uint256 amount;
+        uint256 fundedAmount;
+        uint256 dueDate;
+        uint256 discountRate;
         Status status;
-        string metadataURI; // IPFS hash or off-chain metadata link
-        address exclusiveInvestor; // NEW: address(0) for public, or specific address for private
+        string metadataURI;
+        address exclusiveInvestor;
     }
 
     uint256 public nextInvoiceId;
     mapping(uint256 => Invoice) public invoices;
     mapping(uint256 => address[]) private _investors;
     mapping(uint256 => mapping(address => uint256)) public investments;
-    // Gross amount repaid by the buyer (principal + interest)
     mapping(uint256 => uint256) public totalRepaid;
-    // Net amount available to investors after protocol fee
     mapping(uint256 => uint256) public totalRepaidForInvestors;
 
     address public owner;
     bool public paused;
-    uint256 public feeBps;
     InvoiceNFT public invoiceNFT;
-    StakingRewards public stakingRewards;
     bool private _initialized;
+    bool private _locked;
 
     event InvoiceCreated(
         uint256 indexed id,
@@ -91,21 +87,21 @@ contract InvoiceMarketplace is ReentrancyGuard {
         _;
     }
 
-    function initialize(
-        address _invoiceNFT,
-        address payable _stakingRewards,
-        uint256 _feeBps
-    ) external {
+    error ReentrancyGuard();
+
+    modifier nonReentrant() {
+        if (_locked) revert ReentrancyGuard();
+        _locked = true;
+        _;
+        _locked = false;
+    }
+
+    function initialize(address _invoiceNFT) external {
         require(!_initialized, "Already initialized");
         require(_invoiceNFT != address(0), "NFT zero");
-        require(_stakingRewards != address(0), "Staking zero");
-        require(_feeBps <= 10_000, "fee too high");
 
         owner = msg.sender;
         invoiceNFT = InvoiceNFT(_invoiceNFT);
-        stakingRewards = StakingRewards(_stakingRewards);
-
-        feeBps = _feeBps;
         _initialized = true;
     }
 
@@ -122,19 +118,9 @@ contract InvoiceMarketplace is ReentrancyGuard {
         paused = false;
     }
 
-    function setFeeBps(uint256 _feeBps) external onlyOwner {
-        require(_feeBps <= 10_000, "fee too high");
-        feeBps = _feeBps;
-    }
-
     function setInvoiceNFT(address _invoiceNFT) external onlyOwner {
         require(_invoiceNFT != address(0), "NFT zero");
         invoiceNFT = InvoiceNFT(_invoiceNFT);
-    }
-
-    function setStakingRewards(address payable _stakingRewards) external onlyOwner {
-        require(_stakingRewards != address(0), "Staking zero");
-        stakingRewards = StakingRewards(_stakingRewards);
     }
 
     /// @notice Create a new invoice listed for funding
@@ -184,7 +170,7 @@ contract InvoiceMarketplace is ReentrancyGuard {
         );
 
         if (address(invoiceNFT) != address(0)) {
-            invoiceNFT.mintInvoice(msg.sender, id, metadataURI);
+            invoiceNFT.mintInvoice(msg.sender, id, metadataURI, amount, buyer);
         }
 
         return id;
@@ -229,26 +215,24 @@ contract InvoiceMarketplace is ReentrancyGuard {
         }
     }
 
-    function repayInvoice(uint256 id) external payable invoiceExists(id) onlyBuyer(id) whenNotPaused nonReentrant {
+    /// @notice Mark invoice as repaid after buyer pays via InvoiceNFT.repayInvoice()
+    /// @dev This is called to update marketplace state after NFT repayment
+    function markRepaid(uint256 id) external invoiceExists(id) whenNotPaused {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Funded, "Invoice not funded");
-
-        uint256 interest = (inv.amount * inv.discountRate) / 10_000;
-        uint256 totalOwed = inv.amount + interest;
-        require(msg.value == totalOwed, "Incorrect repayment amount");
+        require(invoiceNFT.isRepaid(id), "NFT not repaid");
 
         inv.status = Status.Repaid;
 
-        uint256 fee = (interest * feeBps) / 10_000;
-        uint256 amountForInvestors = msg.value - fee;
-        totalRepaid[id] = msg.value;
-        totalRepaidForInvestors[id] = amountForInvestors;
-
-        if (fee > 0 && address(stakingRewards) != address(0)) {
-            stakingRewards.notifyRewardAmount{value: fee}();
+        uint256 interest;
+        unchecked {
+            interest = (inv.amount * inv.discountRate) / 10_000;
         }
+        uint256 totalOwed = inv.amount + interest;
+        totalRepaid[id] = totalOwed;
+        totalRepaidForInvestors[id] = totalOwed;
 
-        emit InvoiceRepaid(id, msg.value);
+        emit InvoiceRepaid(id, totalOwed);
     }
 
     function claimRepayment(uint256 id) external invoiceExists(id) whenNotPaused nonReentrant {

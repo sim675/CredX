@@ -42,7 +42,7 @@ export default function InvoiceCard({ invoice }: InvoiceCardProps) {
 
       try {
         const provider = new ethers.JsonRpcProvider(
-          process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology"
+          process.env.NEXT_PUBLIC_RPC_URL || "https://sepolia.drpc.org"
         );
         const contract = new ethers.Contract(
           process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string,

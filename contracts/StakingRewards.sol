@@ -1,21 +1,29 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @title StakingRewards
-/// @notice Users stake the governance token and earn native MATIC from protocol fees
-contract StakingRewards is ReentrancyGuard {
-    IERC20 public immutable stakingToken; // GovernanceToken (CGOV)
+/// @title StakingRewards (Tier 3: Real-Yield Vault)
+/// @notice Stake CGOV to earn native MATIC/POL from protocol fees
+/// @dev Synthetix-style O(1) reward distribution, gas-optimized with unchecked math
+contract StakingRewards {
+    using SafeERC20 for IERC20;
 
-    uint256 public totalSupply;
-    mapping(address => uint256) public balances;
+    IERC20 public immutable stakingToken; // CGOV token
 
-    // reward accounting (in MATIC)
+    uint256 public totalStaked;
+    mapping(address => uint256) public stakedBalance;
+
+    // O(1) reward accounting (in native MATIC/POL)
     uint256 public rewardPerTokenStored;
     mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public rewards;
+    mapping(address => uint256) public pendingRewards;
+
+    error ZeroAmount();
+    error InsufficientBalance();
+    error TransferFailed();
+    error NoStakers();
 
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -23,16 +31,7 @@ contract StakingRewards is ReentrancyGuard {
     event RewardsAdded(uint256 amount);
 
     constructor(address _stakingToken) {
-        require(_stakingToken != address(0), "Staking token is zero");
         stakingToken = IERC20(_stakingToken);
-    }
-
-    modifier updateReward(address account) {
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-        _;
     }
 
     /// @notice Current reward per staked token (scaled by 1e18)
@@ -40,66 +39,89 @@ contract StakingRewards is ReentrancyGuard {
         return rewardPerTokenStored;
     }
 
-    /// @notice How much MATIC a user has earned but not yet claimed
+    /// @notice Calculate earned MATIC for an account
     function earned(address account) public view returns (uint256) {
-        uint256 balance = balances[account];
-        if (balance == 0) {
-            return rewards[account];
+        unchecked {
+            uint256 balance = stakedBalance[account];
+            if (balance == 0) {
+                return pendingRewards[account];
+            }
+            uint256 rewardDelta = rewardPerTokenStored - userRewardPerTokenPaid[account];
+            return pendingRewards[account] + (balance * rewardDelta) / 1e18;
         }
-
-        uint256 paid = userRewardPerTokenPaid[account];
-        uint256 current = rewardPerTokenStored;
-        uint256 pending = (balance * (current - paid)) / 1e18;
-        return rewards[account] + pending;
     }
 
-    /// @notice Stake governance tokens to earn MATIC rewards
-    function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
-        totalSupply += amount;
-        balances[msg.sender] += amount;
-        require(stakingToken.transferFrom(msg.sender, address(this), amount), "Stake transfer failed");
+    modifier updateReward(address account) {
+        if (account != address(0)) {
+            pendingRewards[account] = earned(account);
+            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+        }
+        _;
+    }
+
+    /// @notice Stake CGOV tokens to earn MATIC rewards
+    /// @param amount Amount of CGOV to stake
+    function stake(uint256 amount) external updateReward(msg.sender) {
+        if (amount == 0) revert ZeroAmount();
+        
+        unchecked {
+            totalStaked += amount;
+            stakedBalance[msg.sender] += amount;
+        }
+        
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
-    /// @notice Withdraw staked governance tokens
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
-        require(balances[msg.sender] >= amount, "Insufficient balance");
-        totalSupply -= amount;
-        balances[msg.sender] -= amount;
-        require(stakingToken.transfer(msg.sender, amount), "Withdraw transfer failed");
+    /// @notice Withdraw staked CGOV tokens
+    /// @param amount Amount to withdraw
+    function withdraw(uint256 amount) public updateReward(msg.sender) {
+        if (amount == 0) revert ZeroAmount();
+        if (stakedBalance[msg.sender] < amount) revert InsufficientBalance();
+        
+        unchecked {
+            totalStaked -= amount;
+            stakedBalance[msg.sender] -= amount;
+        }
+        
+        stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
     /// @notice Claim accumulated MATIC rewards
-    function getReward() public nonReentrant updateReward(msg.sender) {
-        uint256 reward = rewards[msg.sender];
+    function getReward() public updateReward(msg.sender) {
+        uint256 reward = pendingRewards[msg.sender];
         if (reward > 0) {
-            rewards[msg.sender] = 0;
+            pendingRewards[msg.sender] = 0;
             (bool sent, ) = payable(msg.sender).call{value: reward}("");
-            require(sent, "Reward transfer failed");
+            if (!sent) revert TransferFailed();
             emit RewardPaid(msg.sender, reward);
         }
     }
 
-    /// @notice Withdraw stake and claim rewards in a single transaction
+    /// @notice Withdraw stake and claim rewards in one transaction
     function exit() external {
-        withdraw(balances[msg.sender]);
+        uint256 balance = stakedBalance[msg.sender];
+        if (balance > 0) {
+            withdraw(balance);
+        }
         getReward();
     }
 
-    /// @notice Called by the marketplace to distribute new MATIC rewards
-    /// @dev msg.value is the new reward amount to be shared among stakers
+    /// @notice Called by InvoiceNFT to distribute protocol fees
+    /// @dev Implements O(1) Synthetix-style instant reward distribution
     function notifyRewardAmount() external payable {
-        require(msg.value > 0, "No reward");
-        require(totalSupply > 0, "No stakers");
+        if (msg.value == 0) revert ZeroAmount();
+        if (totalStaked == 0) revert NoStakers();
 
-        uint256 rewardPerTokenIncrement = (msg.value * 1e18) / totalSupply;
-        rewardPerTokenStored += rewardPerTokenIncrement;
+        unchecked {
+            uint256 rewardPerTokenIncrement = (msg.value * 1e18) / totalStaked;
+            rewardPerTokenStored += rewardPerTokenIncrement;
+        }
 
         emit RewardsAdded(msg.value);
     }
 
+    /// @notice Receive native MATIC/POL
     receive() external payable {}
 }

@@ -5,17 +5,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.20",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-          viaIR: true,
-        },
-      },
-      {
-        version: "0.8.22",
+        version: "0.8.26",
         settings: {
           optimizer: {
             enabled: true,
@@ -32,18 +22,16 @@ module.exports = {
   },
 
   networks: {
-    // I changed the key to 'amoy' so 'npx hardhat run ... --network amoy' works
-    amoy: {
-      url: process.env.NEXT_PUBLIC_RPC_URL || "https://polygon-amoy.g.alchemy.com/v2/hpygMW-5XZY8xX6cFcj8O",
-      accounts: process.env.POLYGON_AMOY_PRIVATE_KEY ? [process.env.POLYGON_AMOY_PRIVATE_KEY] : [],
-      chainId: 80002,
-      gasPrice: 35000000000,
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
+      accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],
+      chainId: 11155111,
+      gasPrice: 20000000000,
     },
   },
 
   etherscan: {
-    // Used for verifying the contract on Polyscan
-    apiKey: "4AZ485M74J3GFNRM5P9E9SQANM2J3AEYRX",
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
   },
 
   // Added Sourcify as a fallback for the 522 Timeout errors

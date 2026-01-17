@@ -12,7 +12,7 @@ export function useInvoiceContract() {
   const { data: walletClient } = useWalletClient();
 
   const getProvider = useCallback(() => {
-    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology";
+    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://sepolia.drpc.org";
     return new ethers.JsonRpcProvider(rpcUrl);
   }, []);
 

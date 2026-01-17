@@ -180,7 +180,7 @@ export default function MSMEWalletPage() {
     )
   }
 
-  const polygonScanUrl = `https://amoy.polygonscan.com/address/${address}`
+  const explorerUrl = `https://sepolia.etherscan.io/address/${address}`
 
   return (
     <div className="space-y-8 relative z-10 pb-20">
@@ -214,7 +214,7 @@ export default function MSMEWalletPage() {
               </div>
               Wallet Balance
             </CardTitle>
-            <CardDescription className="text-white/50">Your native POL balance</CardDescription>
+            <CardDescription className="text-white/50">Your native SepoliaETH balance</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -226,7 +226,7 @@ export default function MSMEWalletPage() {
                   <p className="text-5xl font-bold text-white tracking-tight">
                     {balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} 
                   </p>
-                  <span className="text-xl font-medium text-primary">POL</span>
+                  <span className="text-xl font-medium text-primary">SepoliaETH</span>
                 </div>
               )}
             </div>
@@ -234,7 +234,7 @@ export default function MSMEWalletPage() {
               <Button
                 variant="outline"
                 className="flex-1 border-white/10 hover:bg-white/5 text-white"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-4 mr-2" />
                 View on Explorer
@@ -282,11 +282,11 @@ export default function MSMEWalletPage() {
               <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-lg bg-white/5 border border-white/5">
                       <p className="text-[10px] text-muted-foreground uppercase">Network</p>
-                      <p className="text-sm font-medium text-white">Polygon Amoy</p>
+                      <p className="text-sm font-medium text-white">Sepolia</p>
                   </div>
                    <div className="p-3 rounded-lg bg-white/5 border border-white/5">
                       <p className="text-[10px] text-muted-foreground uppercase">Chain ID</p>
-                      <p className="text-sm font-medium text-white">80002</p>
+                      <p className="text-sm font-medium text-white">11155111</p>
                   </div>
               </div>
             )}
@@ -310,7 +310,7 @@ export default function MSMEWalletPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold text-white">
-                  {totalLiquidityReceived.toFixed(2)} <span className="text-sm font-normal text-muted-foreground">MATIC</span>
+                  {totalLiquidityReceived.toFixed(2)} <span className="text-sm font-normal text-muted-foreground">SepoliaETH</span>
                 </div>
                 <ProgressBar value={100} colorClass="bg-purple-500" />
                 <p className="text-[10px] text-muted-foreground mt-2">Lifetime funding received</p>
@@ -333,7 +333,7 @@ export default function MSMEWalletPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold text-white">
-                  {pendingSettlements.toFixed(2)} <span className="text-sm font-normal text-muted-foreground">MATIC</span>
+                  {pendingSettlements.toFixed(2)} <span className="text-sm font-normal text-muted-foreground">SepoliaETH</span>
                 </div>
                 <ProgressBar value={pendingPercentage} colorClass="bg-amber-500" />
                 <p className="text-[10px] text-muted-foreground mt-2">
@@ -357,7 +357,7 @@ export default function MSMEWalletPage() {
                  Online <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span>
             </div>
             <ProgressBar value={100} colorClass="bg-emerald-500" />
-            <p className="text-[10px] text-muted-foreground mt-2">Polygon Amoy Testnet</p>
+            <p className="text-[10px] text-muted-foreground mt-2">Sepolia Testnet</p>
           </CardContent>
         </Card>
       </div>
@@ -443,7 +443,7 @@ export default function MSMEWalletPage() {
                   <div className="grid gap-4 md:grid-cols-3">
                     <div>
                         <p className="text-xs text-muted-foreground mb-1">Currency</p>
-                        <p className="text-sm font-medium text-white">POL (Polygon)</p>
+                        <p className="text-sm font-medium text-white">SepoliaETH (Sepolia testnet)</p>
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground mb-1">Standard</p>
@@ -454,9 +454,9 @@ export default function MSMEWalletPage() {
                         <Button
                             variant="link"
                             className="p-0 h-auto text-sm text-primary hover:text-primary/80"
-                            onClick={() => window.open(polygonScanUrl, "_blank")}
+                            onClick={() => window.open(explorerUrl, "_blank")}
                         >
-                            View on PolygonScan
+                            View on Etherscan (Sepolia)
                             <ExternalLink className="size-3 ml-1" />
                         </Button>
                     </div>

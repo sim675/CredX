@@ -46,7 +46,7 @@ export default function TokenizeInvoice() {
     | "error"
   >("idle")
   const [txHash, setTxHash] = useState<string | null>(null)
-  const AMOY_EXPLORER_BASE_URL = "https://amoy.polygonscan.com"
+  const EXPLORER_BASE_URL = "https://sepolia.etherscan.io"
   
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -224,7 +224,7 @@ export default function TokenizeInvoice() {
         status: "pending",
       })
 
-      const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology"
+      const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://sepolia.optimism.io"
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl)
 
       setTxStatus("confirming")
@@ -365,11 +365,11 @@ export default function TokenizeInvoice() {
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Invoice Tokenized!</h1>
         <p className="text-white/60 text-center max-w-sm">
-          Your invoice has been successfully recorded on the Polygon Amoy blockchain.
+          Your invoice has been successfully recorded on the Sepolia testnet.
         </p>
         {txHash && (
           <Button variant="outline" className="border-white/10 text-white hover:bg-white/10" asChild>
-            <a href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
+            <a href={`${EXPLORER_BASE_URL}/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
               View on Explorer
             </a>
           </Button>
@@ -666,7 +666,7 @@ export default function TokenizeInvoice() {
                   )}
                   {txHash && (
                     <a
-                      href={`${AMOY_EXPLORER_BASE_URL}/tx/${txHash}`}
+                      href={`${EXPLORER_BASE_URL}/tx/${txHash}`}
                       target="_blank"
                       rel="noreferrer"
                       className="ml-2 underline text-primary hover:text-primary/80"

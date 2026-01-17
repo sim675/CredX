@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
-import { polygonAmoy } from "wagmi/chains";
+import { sepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 import "@rainbow-me/rainbowkit/styles.css";
 
@@ -16,11 +16,11 @@ const rainbowKitTheme = darkTheme({
   overlayBlur: "small",
 });
 
-// Configure wagmi with only Polygon Amoy
+// Configure wagmi with Sepolia testnet
 const config = createConfig({
-  chains: [polygonAmoy],
+  chains: [sepolia],
   transports: {
-    [polygonAmoy.id]: http(process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology"),
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL || "https://sepolia.drpc.org"),
   },
   connectors: [
     injected({
@@ -44,7 +44,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={rainbowKitTheme}
-          initialChain={polygonAmoy}
+          initialChain={sepolia}
           modalSize="compact"
         >
           {children}

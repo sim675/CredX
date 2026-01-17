@@ -93,7 +93,7 @@ export default function BigBuyerWalletPage() {
     )
   }
 
-  const polygonScanUrl = `https://amoy.polygonscan.com/address/${address}`
+  const explorerUrl = `https://sepolia.etherscan.io/address/${address}`
   return (
     <div className="min-h-screen bg-[#080808] relative overflow-hidden text-white">
       {/* Background Ambient Glows */}
@@ -120,12 +120,12 @@ export default function BigBuyerWalletPage() {
             </div>
             <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Wallet Balance</p>
             <div className="mt-4">
-              <p className="text-sm text-neutral-500 mb-2">POL Balance</p>
+              <p className="text-sm text-neutral-500 mb-2">SepoliaETH Balance</p>
               {isLoadingBalance ? (
                 <Skeleton className="h-12 w-48" />
               ) : (
                 <p className="text-4xl font-extrabold text-white">
-                  {balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL
+                  {balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} SepoliaETH
                 </p>
               )}
             </div>
@@ -133,10 +133,10 @@ export default function BigBuyerWalletPage() {
               <Button
                 variant="outline"
                 className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-4 mr-2" />
-                View on Explorer
+                View on Etherscan (Sepolia)
               </Button>
             </div>
           </div>
@@ -176,10 +176,10 @@ export default function BigBuyerWalletPage() {
               <Button
                 variant="outline"
                 className="w-full border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-4 mr-2" />
-                View on PolygonScan
+                View on Etherscan (Sepolia)
               </Button>
             )}
           </div>
@@ -192,7 +192,7 @@ export default function BigBuyerWalletPage() {
               <Check className="size-4 text-[#FFD600]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-extrabold text-white">{totalPaid.toFixed(2)} MATIC</div>
+              <div className="text-2xl font-extrabold text-white">{totalPaid.toFixed(2)} SepoliaETH</div>
               <p className="text-xs text-muted-foreground">
                 {repaidInvoices.length} {repaidInvoices.length === 1 ? "payment" : "payments"}
               </p>
@@ -205,7 +205,7 @@ export default function BigBuyerWalletPage() {
               <Wallet className="size-4 text-[#FFD600]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-extrabold text-white">{totalOutstanding.toFixed(2)} MATIC</div>
+              <div className="text-2xl font-extrabold text-white">{totalOutstanding.toFixed(2)} SepoliaETH</div>
               <p className="text-xs text-muted-foreground">
                 {outstandingInvoices.length} {outstandingInvoices.length === 1 ? "invoice" : "invoices"}
               </p>
@@ -222,7 +222,7 @@ export default function BigBuyerWalletPage() {
                 {repaidInvoices.length > 0
                   ? (totalPaid / repaidInvoices.length).toFixed(2)
                   : "0.00"}{" "}
-                MATIC
+                SepoliaETH
               </div>
               <p className="text-xs text-muted-foreground">Per invoice payment</p>
             </CardContent>
@@ -240,21 +240,21 @@ export default function BigBuyerWalletPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-orange-200 mb-1">Network</p>
-              <p className="text-sm text-orange-200">Polygon Amoy Testnet (Chain ID: 80002)</p>
+              <p className="text-sm text-orange-200">Sepolia Testnet (Chain ID: 11155111)</p>
             </div>
             <div>
               <p className="text-sm font-medium text-orange-200 mb-1">Currency</p>
-              <p className="text-sm text-orange-200">MATIC (Polygon native token)</p>
+              <p className="text-sm text-orange-200">SepoliaETH (native token on Sepolia)</p>
             </div>
             <div>
               <p className="text-sm font-medium text-orange-200 mb-1">Block Explorer</p>
               <Button
                 variant="link"
                 className="p-0 h-auto text-sm border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-3 ml-1" />
-                View on PolygonScan
+                View on Etherscan (Sepolia)
               </Button>
             </div>
           </CardContent>

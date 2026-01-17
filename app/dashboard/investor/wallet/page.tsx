@@ -97,7 +97,7 @@ export default function InvestorWalletPage() {
     )
   }
 
-  const polygonScanUrl = `https://amoy.polygonscan.com/address/${address}`
+  const explorerUrl = `https://sepolia.etherscan.io/address/${address}`
   return (
     <div className="space-y-6">
       <div>
@@ -112,16 +112,16 @@ export default function InvestorWalletPage() {
               <Wallet className="size-5 text-primary" />
               Wallet Balance
             </CardTitle>
-            <CardDescription>Your native POL balance</CardDescription>
+            <CardDescription>Your native SepoliaETH balance</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">POL Balance</p>
+              <p className="text-sm text-muted-foreground mb-1">SepoliaETH Balance</p>
               {isLoadingBalance ? (
                 <Skeleton className="h-12 w-48" />
               ) : (
                 <p className="text-4xl font-bold">
-                  {balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL
+                  {balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} SepoliaETH
                 </p>
               )}
             </div>
@@ -129,7 +129,7 @@ export default function InvestorWalletPage() {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-4 mr-2" />
                 View on Explorer
@@ -170,10 +170,10 @@ export default function InvestorWalletPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
                 <ExternalLink className="size-4 mr-2" />
-                View on PolygonScan
+                View on Etherscan (Sepolia)
               </Button>
             )}
           </CardContent>
@@ -190,7 +190,7 @@ export default function InvestorWalletPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{totalDeployed.toFixed(2)} MATIC</div>
+                <div className="text-2xl font-bold">{totalDeployed.toFixed(2)} SepoliaETH</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {portfolioInvoices.length} {portfolioInvoices.length === 1 ? "investment" : "investments"}
                 </p>
@@ -222,7 +222,7 @@ export default function InvestorWalletPage() {
             <CardTitle className="text-sm font-medium">Network</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Polygon Amoy</div>
+            <div className="text-2xl font-bold">Sepolia</div>
             <p className="text-xs text-muted-foreground mt-1">Testnet</p>
           </CardContent>
         </Card>
@@ -239,20 +239,20 @@ export default function InvestorWalletPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium mb-1">Network</p>
-              <p className="text-sm text-muted-foreground">Polygon Amoy Testnet (Chain ID: 80002)</p>
+              <p className="text-sm text-muted-foreground">Sepolia Testnet (Chain ID: 11155111)</p>
             </div>
             <div>
               <p className="text-sm font-medium mb-1">Currency</p>
-              <p className="text-sm text-muted-foreground">POL (Polygon native token)</p>
+              <p className="text-sm text-muted-foreground">SepoliaETH (native token on Sepolia)</p>
             </div>
             <div>
               <p className="text-sm font-medium mb-1">Block Explorer</p>
               <Button
                 variant="link"
                 className="p-0 h-auto text-sm"
-                onClick={() => window.open(polygonScanUrl, "_blank")}
+                onClick={() => window.open(explorerUrl, "_blank")}
               >
-                View on PolygonScan
+                View on Etherscan (Sepolia)
                 <ExternalLink className="size-3 ml-1" />
               </Button>
             </div>

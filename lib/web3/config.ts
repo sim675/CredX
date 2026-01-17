@@ -1,11 +1,11 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { polygonAmoy } from "wagmi/chains";
+import { sepolia } from "wagmi/chains";
 
 export const config = getDefaultConfig({
   appName: "Decentralized Invoice Marketplace",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_WALLETCONNECT_PROJECT_ID",
-  chains: [polygonAmoy],
+  chains: [sepolia],
 });
 
 export const wagmiConfig = config;
-export const chains = [polygonAmoy];
+export const chains = [sepolia];
