@@ -37,7 +37,6 @@ contract InvoiceMarketplace {
     mapping(uint256 => uint256) public totalRepaidForInvestors;
 
     address public owner;
-    bool public paused;
     InvoiceNFT public invoiceNFT;
     bool private _initialized;
     bool private _locked;
@@ -82,10 +81,7 @@ contract InvoiceMarketplace {
         _;
     }
 
-    modifier whenNotPaused() {
-        require(!paused, "Paused");
-        _;
-    }
+
 
     error ReentrancyGuard();
 
@@ -110,13 +106,7 @@ contract InvoiceMarketplace {
         owner = newOwner;
     }
 
-    function pause() external onlyOwner {
-        paused = true;
-    }
 
-    function unpause() external onlyOwner {
-        paused = false;
-    }
 
     function setInvoiceNFT(address _invoiceNFT) external onlyOwner {
         require(_invoiceNFT != address(0), "NFT zero");
@@ -137,7 +127,7 @@ contract InvoiceMarketplace {
         uint256 discountRate,
         string calldata metadataURI,
         address exclusiveInvestor // NEW parameter
-    ) external whenNotPaused returns (uint256) {
+    ) external returns (uint256) {
         require(buyer != address(0), "Buyer required");
         require(amount > 0, "Amount must be > 0");
         require(dueDate > block.timestamp, "Due date must be in future");
@@ -176,7 +166,7 @@ contract InvoiceMarketplace {
         return id;
     }
 
-    function confirmInvoice(uint256 id) external invoiceExists(id) onlyBuyer(id) whenNotPaused {
+    function confirmInvoice(uint256 id) external invoiceExists(id) onlyBuyer(id) {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.PendingBuyer, "Waiting for Buyer");
         inv.status = Status.Fundraising;
@@ -184,7 +174,7 @@ contract InvoiceMarketplace {
     }
 
     /// @notice Invest native MATIC into an invoice that is currently fundraising
-    function investInInvoice(uint256 id) external payable invoiceExists(id) whenNotPaused nonReentrant {
+    function investInInvoice(uint256 id) external payable invoiceExists(id) nonReentrant {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Fundraising, "Not fundraising");
         require(block.timestamp <= inv.dueDate, "Invoice expired");
@@ -217,7 +207,7 @@ contract InvoiceMarketplace {
 
     /// @notice Mark invoice as repaid after buyer pays via InvoiceNFT.repayInvoice()
     /// @dev This is called to update marketplace state after NFT repayment
-    function markRepaid(uint256 id) external invoiceExists(id) whenNotPaused {
+    function markRepaid(uint256 id) external invoiceExists(id) {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Funded, "Invoice not funded");
         require(invoiceNFT.isRepaid(id), "NFT not repaid");
@@ -235,7 +225,7 @@ contract InvoiceMarketplace {
         emit InvoiceRepaid(id, totalOwed);
     }
 
-    function claimRepayment(uint256 id) external invoiceExists(id) whenNotPaused nonReentrant {
+    function claimRepayment(uint256 id) external invoiceExists(id) nonReentrant {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Repaid, "Invoice not repaid");
 
@@ -254,7 +244,7 @@ contract InvoiceMarketplace {
         emit RepaymentClaimed(id, msg.sender, payout);
     }
 
-    function claimRefund(uint256 id) external invoiceExists(id) whenNotPaused nonReentrant {
+    function claimRefund(uint256 id) external invoiceExists(id) nonReentrant {
         Invoice storage inv = invoices[id];
         require(inv.status == Status.Fundraising, "Not fundraising");
         require(block.timestamp > inv.dueDate, "Invoice not expired");

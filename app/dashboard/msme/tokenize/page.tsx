@@ -208,6 +208,21 @@ export default function TokenizeInvoice() {
         if (txError?.code === "ACTION_REJECTED" || txError?.code === 4001) {
           throw new Error("You rejected the transaction in your wallet.")
         }
+        // Handle ERC721InvalidReceiver error (0x73c6ac6e) - indicates InvoiceNFT contract issue
+        const errorData = txError?.data || txError?.error?.data || ""
+        if (typeof errorData === "string" && errorData.startsWith("0x73c6ac6e")) {
+          throw new Error(
+            "Contract configuration error: The InvoiceNFT contract is not properly linked to the Marketplace. " +
+            "Please contact the admin to verify contract deployment and call setMarketplace() on InvoiceNFT."
+          )
+        }
+        // Handle OnlyMarketplace error from InvoiceNFT
+        if (typeof errorData === "string" && errorData.startsWith("0x2b35006d")) {
+          throw new Error(
+            "Contract configuration error: The InvoiceMarketplace is not authorized to mint invoices. " +
+            "Please contact the admin to call setMarketplace() on the InvoiceNFT contract."
+          )
+        }
         throw txError
       }
 
@@ -334,7 +349,7 @@ export default function TokenizeInvoice() {
 
       setTimeout(() => {
         router.refresh()
-        router.push("/dashboard/msme/active")
+        router.push("/dashboard/msme")
       }, 3000)
 
     } catch (error: any) {

@@ -11,17 +11,13 @@ import { CreditCard, Wallet, FileText, DollarSign, Clock, CheckCircle2, ArrowUpR
 import { fetchInvoicesByBuyer, Invoice, getStatusLabel, calculateDaysRemaining } from "@/lib/invoice"
 import { useToast } from "@/components/ui/use-toast"
 import { ethers } from "ethers"
-import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json"
-// 1. Import the font
+import { useInvoiceNFT } from "@/lib/contracts/useInvoiceNFT"
 import { Press_Start_2P } from "next/font/google"
 
-// 2. Configure the font
 const minecraft = Press_Start_2P({ 
   weight: "400", 
   subsets: ["latin"] 
 })
-
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string
 
 function formatAddress(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -30,6 +26,7 @@ function formatAddress(addr: string) {
 export default function BigBuyerOutstandingPage() {
   const { address, isConnected } = useAccount()
   const { data: walletClient } = useWalletClient()
+  const { getReadContract: getInvoiceNFTContract, getWriteContract: getInvoiceNFTWriteContract } = useInvoiceNFT()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [repaying, setRepaying] = useState<number | null>(null)
@@ -77,25 +74,38 @@ export default function BigBuyerOutstandingPage() {
 
     try {
       setRepaying(invoiceId)
-      const provider = new ethers.BrowserProvider(walletClient as any)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        InvoiceMarketplaceABI.abi,
-        signer
-      )
+      
+      // Get the InvoiceNFT contract for reading invoice data
+      const invoiceNFTRead = getInvoiceNFTContract()
+      
+      // Fetch invoice data from InvoiceNFT contract
+      const invoiceData = await invoiceNFTRead.invoiceData(invoiceId)
+      const invoiceAmount: bigint = invoiceData.amount
+      
+      // Check if already repaid
+      if (invoiceData.repaid) {
+        toast({
+          title: "Already Repaid",
+          description: "This invoice has already been repaid",
+          variant: "destructive",
+        })
+        setRepaying(null)
+        return
+      }
 
-      // Fetch latest on-chain invoice data to compute principal + yield
-      const onchainInvoice = await contract.invoices(invoiceId)
-      const principalWei: bigint = onchainInvoice.amount
-      const discountRateBps: bigint = onchainInvoice.discountRate
+      // Get write contract and repay via InvoiceNFT
+      // The contract handles the 5% fee calculation internally
+      const invoiceNFTWrite = await getInvoiceNFTWriteContract()
+      const tx = await invoiceNFTWrite.repayInvoice(invoiceId, { value: invoiceAmount,gasLimit: 300000 })
+      
+      toast({
+        title: "Transaction Submitted",
+        description: "Waiting for confirmation...",
+      })
 
-      const tenThousand = BigInt(10000)
-      const totalOwedWei = principalWei + (principalWei * discountRateBps) / tenThousand
-
-      const tx = await contract.repayInvoice(invoiceId, { value: totalOwedWei })
       await tx.wait()
 
+      // Send notification
       if (address) {
         try {
           await fetch("/api/notifications/invoices/repaid", {
@@ -115,7 +125,7 @@ export default function BigBuyerOutstandingPage() {
 
       toast({
         title: "Success",
-        description: "Invoice repaid successfully",
+        description: "Invoice repaid successfully! 5% fee sent to staking rewards.",
       })
 
       // Reload invoices
@@ -128,7 +138,7 @@ export default function BigBuyerOutstandingPage() {
       console.error("Repay error:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to repay invoice",
+        description: error.reason || error.message || "Failed to repay invoice",
         variant: "destructive",
       })
     } finally {
@@ -174,7 +184,6 @@ export default function BigBuyerOutstandingPage() {
     )
   }
   return (
-    // FIX 1: Changed overflow-hidden to overflow-x-hidden to prevent cutting off bottom content
     <div className="min-h-screen bg-transparent relative text-white selection:bg-orange-500/30">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Background image with low opacity */}
@@ -185,10 +194,8 @@ export default function BigBuyerOutstandingPage() {
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-orange-400/10 blur-[120px] rounded-full" />
       </div>
 
-      {/* FIX 2: Added pb-20 (padding-bottom) so scrolling goes all the way down */}
       <main className="relative z-10 p-6 space-y-8 pb-20 overflow-visible">
         <div>
-          {/* 3. Applied the font here */}
           <h1 className={`${minecraft.className} text-2xl md:text-3xl text-white uppercase leading-normal pt-2`}>
             Outstanding Invoices
           </h1>
@@ -250,6 +257,9 @@ export default function BigBuyerOutstandingPage() {
             <p className="text-neutral-500">
               Total outstanding: {totalOutstanding.toFixed(2)} MATIC across {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
             </p>
+            <p className="text-xs text-neutral-400 mt-1">
+              ℹ️ A 5% protocol fee is automatically deducted and sent to staking rewards
+            </p>
           </div>
 
           <div className="mt-6">
@@ -262,7 +272,6 @@ export default function BigBuyerOutstandingPage() {
                 </p>
               </div>
             ) : (
-              // FIX 3: Changed bg-black/20 to bg-white/[0.02] (glassy) to see the background blobs
               <div className="rounded-lg border border-orange-500/10 bg-white/[0.02] overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -287,7 +296,6 @@ export default function BigBuyerOutstandingPage() {
                       return (
                         <TableRow
                           key={invoice.id}
-                          // FIX 4: Changed hover state to a lighter white opacity for glass effect
                           className="border-b border-orange-500/10 hover:bg-white/[0.05] transition-colors"
                         >
                           <TableCell className="font-medium font-mono text-xs text-white">#{invoice.id}</TableCell>

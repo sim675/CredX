@@ -25,6 +25,7 @@ const navItems: RoleNavItems = {
   ],
   investor: [
     { name: "Dashboard", href: "/dashboard/investor", icon: "📊" },
+    { name: "Stake-to-Yield", href: "/dashboard/investor/stake-to-yield", icon: "📈" },
     { name: "Marketplace", href: "/dashboard/investor/marketplace", icon: "🛒" },
     { name: "My Investments", href: "/dashboard/investor/portfolio", icon: "💼" },
   ],

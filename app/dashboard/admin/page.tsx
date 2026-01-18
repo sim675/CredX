@@ -10,26 +10,25 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Shield, Pause, Play, Coins, Settings } from "lucide-react"
+import { Shield, Coins, UserPlus, CheckCircle2 } from "lucide-react"
 import { useInvoiceContract } from "@/lib/contracts/useInvoiceContract"
-import { useGovernanceToken } from "@/lib/contracts/useGovernanceToken"
+import { useCredXUtilityToken } from "@/lib/contracts/useCredXUtilityToken"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function AdminPanelPage() {
   const { address, isConnected } = useAccount()
   const router = useRouter()
   const { user } = useAuth()
-  const { getReadContract: getMarketplaceContract, getWriteContract: getMarketplaceWriteContract } = useInvoiceContract()
-  const { getReadContract: getTokenContract, getWriteContract: getTokenWriteContract, tokenAddress } = useGovernanceToken()
+  const { getReadContract: getMarketplaceContract } = useInvoiceContract()
+  const { getReadContract: getUtilityTokenContract, getWriteContract: getUtilityTokenWriteContract, contractAddress: utilityTokenAddress } = useCredXUtilityToken()
   const { toast } = useToast()
 
   const [isOwner, setIsOwner] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [isPausing, setIsPausing] = useState(false)
   const [isMinting, setIsMinting] = useState(false)
   const [mintAmount, setMintAmount] = useState("")
   const [mintAddress, setMintAddress] = useState("")
+  const [tokenAdmin, setTokenAdmin] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -42,10 +41,14 @@ export default function AdminPanelPage() {
         setIsLoading(true)
         const marketplaceContract = getMarketplaceContract()
         const owner = await marketplaceContract.owner()
-        const paused = await marketplaceContract.paused()
+        
+        // Also check if the user is the utility token admin
+        const tokenContract = getUtilityTokenContract()
+        const admin = await tokenContract.admin()
+        setTokenAdmin(admin)
 
+        // User is considered owner if they own the marketplace
         setIsOwner(owner.toLowerCase() === address.toLowerCase())
-        setIsPaused(paused)
       } catch (error) {
         console.error("Failed to check owner status:", error)
         setIsOwner(false)
@@ -55,7 +58,7 @@ export default function AdminPanelPage() {
     }
 
     checkOwner()
-  }, [isConnected, address, getMarketplaceContract])
+  }, [isConnected, address, getMarketplaceContract, getUtilityTokenContract])
 
   // Redirect non-owners away from admin page
   useEffect(() => {
@@ -78,61 +81,21 @@ export default function AdminPanelPage() {
     }
   }, [isLoading, isConnected, isOwner, router, user?.role])
 
-  const handlePause = async () => {
-    try {
-      setIsPausing(true)
-      const contract = await getMarketplaceWriteContract()
-      const tx = await contract.pause()
-      await tx.wait()
-
-      toast({
-        title: "Success",
-        description: "Marketplace paused successfully",
-      })
-
-      setIsPaused(true)
-    } catch (error: any) {
-      console.error("Pause failed:", error)
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to pause marketplace",
-        variant: "destructive",
-      })
-    } finally {
-      setIsPausing(false)
-    }
-  }
-
-  const handleUnpause = async () => {
-    try {
-      setIsPausing(true)
-      const contract = await getMarketplaceWriteContract()
-      const tx = await contract.unpause()
-      await tx.wait()
-
-      toast({
-        title: "Success",
-        description: "Marketplace unpaused successfully",
-      })
-
-      setIsPaused(false)
-    } catch (error: any) {
-      console.error("Unpause failed:", error)
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to unpause marketplace",
-        variant: "destructive",
-      })
-    } finally {
-      setIsPausing(false)
-    }
-  }
-
-  const handleMint = async () => {
+  const handleOnboardInvestor = async () => {
     if (!mintAmount || !mintAddress || parseFloat(mintAmount) <= 0) {
       toast({
         title: "Invalid Input",
-        description: "Please enter a valid amount and address",
+        description: "Please enter a valid amount and investor address",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate Ethereum address
+    if (!ethers.isAddress(mintAddress)) {
+      toast({
+        title: "Invalid Address",
+        description: "Please enter a valid Ethereum address",
         variant: "destructive",
       })
       return
@@ -140,14 +103,14 @@ export default function AdminPanelPage() {
 
     try {
       setIsMinting(true)
-      const tokenContract = await getTokenWriteContract()
+      const tokenContract = await getUtilityTokenWriteContract()
       const amount = ethers.parseEther(mintAmount)
       const tx = await tokenContract.mint(mintAddress, amount)
       await tx.wait()
 
       toast({
         title: "Success",
-        description: `Minted ${mintAmount} CGOV to ${mintAddress.slice(0, 6)}...${mintAddress.slice(-4)}`,
+        description: `Investor onboarded! Minted ${mintAmount} CREDX to ${mintAddress.slice(0, 6)}...${mintAddress.slice(-4)}`,
       })
 
       setMintAmount("")
@@ -156,13 +119,16 @@ export default function AdminPanelPage() {
       console.error("Mint failed:", error)
       toast({
         title: "Error",
-        description: error?.message || "Failed to mint tokens",
+        description: error?.reason || error?.message || "Failed to mint utility tokens",
         variant: "destructive",
       })
     } finally {
       setIsMinting(false)
     }
   }
+
+  // Check if user can mint utility tokens (is token admin)
+  const canMintTokens = tokenAdmin && address && tokenAdmin.toLowerCase() === address.toLowerCase()
 
   if (!isConnected) {
     return (
@@ -211,79 +177,89 @@ export default function AdminPanelPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-        <p className="text-muted-foreground">Manage marketplace settings and mint governance tokens.</p>
+        <p className="text-muted-foreground">Manage platform access and onboard investors to the ecosystem.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Platform Status Card */}
         <Card className="border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="size-5" />
-              Marketplace Control
+              <CheckCircle2 className="size-5 text-emerald-500" />
+              Platform Status
             </CardTitle>
-            <CardDescription>Pause or unpause the marketplace</CardDescription>
+            <CardDescription>Marketplace is permanently active</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Status</span>
-              <Badge variant={isPaused ? "destructive" : "default"}>
-                {isPaused ? "Paused" : "Active"}
+              <span className="text-sm font-medium">Marketplace</span>
+              <Badge variant="default" className="bg-emerald-500">Active</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Utility Token</span>
+              <Badge variant="outline" className="font-mono text-xs">
+                {utilityTokenAddress?.slice(0, 6)}...{utilityTokenAddress?.slice(-4)}
               </Badge>
             </div>
-            {isPaused ? (
-              <Button onClick={handleUnpause} className="w-full" disabled={isPausing}>
-                <Play className="size-4 mr-2" />
-                {isPausing ? "Unpausing..." : "Unpause Marketplace"}
-              </Button>
-            ) : (
-              <Button onClick={handlePause} variant="destructive" className="w-full" disabled={isPausing}>
-                <Pause className="size-4 mr-2" />
-                {isPausing ? "Pausing..." : "Pause Marketplace"}
-              </Button>
-            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Your Role</span>
+              <Badge variant="secondary">Platform Owner</Badge>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Investor Onboarding Card */}
         <Card className="border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Coins className="size-5" />
-              Mint CGOV Tokens
+              <UserPlus className="size-5" />
+              Investor Onboarding
             </CardTitle>
-            <CardDescription>Mint governance tokens for testing purposes</CardDescription>
+            <CardDescription>Mint CredX Utility Tokens to onboard new investors</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recipient Address</label>
-              <Input
-                type="text"
-                placeholder="0x..."
-                value={mintAddress}
-                onChange={(e) => setMintAddress(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Amount (CGOV)</label>
-              <Input
-                type="number"
-                placeholder="1000"
-                value={mintAmount}
-                onChange={(e) => setMintAmount(e.target.value)}
-                min="0"
-                step="0.0001"
-              />
-            </div>
-            <Button
-              onClick={handleMint}
-              className="w-full"
-              disabled={isMinting || !mintAmount || !mintAddress}
-            >
-              {isMinting ? "Minting..." : "Mint CGOV"}
-            </Button>
+            {!canMintTokens ? (
+              <div className="text-sm text-amber-500 bg-amber-500/10 p-3 rounded-md">
+                ⚠️ You are the marketplace owner but not the utility token admin. Token minting requires the token admin address.
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Investor Wallet Address</label>
+                  <Input
+                    type="text"
+                    placeholder="0x..."
+                    value={mintAddress}
+                    onChange={(e) => setMintAddress(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Amount (CREDX)</label>
+                  <Input
+                    type="number"
+                    placeholder="1000"
+                    value={mintAmount}
+                    onChange={(e) => setMintAmount(e.target.value)}
+                    min="0"
+                    step="1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    CREDX tokens enable investors to stake and earn CGOV governance tokens
+                  </p>
+                </div>
+                <Button
+                  onClick={handleOnboardInvestor}
+                  className="w-full"
+                  disabled={isMinting || !mintAmount || !mintAddress}
+                >
+                  <Coins className="size-4 mr-2" />
+                  {isMinting ? "Minting..." : "Onboard Investor"}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   )
 }
-
