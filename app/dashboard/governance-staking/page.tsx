@@ -17,6 +17,15 @@ import { useCGOV } from "@/lib/contracts/useCGOV"
 import { useStakingRewards } from "@/lib/contracts/useStakingRewards"
 import { UTILITY_STAKER_ADDRESS, STAKING_REWARDS_ADDRESS } from "@/lib/contracts/addresses"
 
+// 1. IMPORT MINECRAFT FONT
+import { Press_Start_2P } from 'next/font/google'
+
+const minecraft = Press_Start_2P({ 
+  weight: '400', 
+  subsets: ['latin'],
+  display: 'swap', 
+})
+
 export default function GovernanceStakingPage() {
   const { address, isConnected } = useAccount()
   const { toast } = useToast()
@@ -64,7 +73,6 @@ export default function GovernanceStakingPage() {
       const cgov = getCGOVContract()
       const stakingRewards = getStakingRewardsContract()
 
-      // Fetch all balances in parallel
       const [
         utilityBal,
         utilityStakedBal,
@@ -259,7 +267,6 @@ export default function GovernanceStakingPage() {
     }
   }
 
-  // Check if approval is needed
   const needsUtilityApproval = parseFloat(utilityAllowance) < parseFloat(utilityStakeAmount || "0")
   const needsCGOVApproval = parseFloat(cgovAllowance) < parseFloat(cgovStakeAmount || "0")
 
@@ -301,7 +308,10 @@ export default function GovernanceStakingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Governance & Staking</h1>
+        {/* APPLIED MINECRAFT FONT TO HEADER */}
+        <h1 className={`text-3xl font-bold tracking-tight ${minecraft.className} leading-relaxed`}>
+          Governance & Staking
+        </h1>
         <p className="text-muted-foreground">
           Stake tokens to earn rewards through the 3-tier Real-Yield system.
         </p>
@@ -316,71 +326,78 @@ export default function GovernanceStakingPage() {
         </Card>
       )}
 
-      {/* Balance Overview */}
+      {/* Balance Overview - UPDATED COLORS AND ICONS */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <Card className="border-border/50 bg-card/50">
+        
+        {/* 1. CREDX Balance (Blue) */}
+        <Card className="border-none bg-blue-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CREDX Balance</CardTitle>
-            <Coins className="size-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium text-white/90">CREDX Balance</CardTitle>
+            <Coins className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(utilityBalance).toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Utility Tokens</p>
+            <p className="text-xs text-white/80">Utility Tokens</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 bg-card/50">
+        {/* 2. CREDX Staked (Blue) */}
+        <Card className="border-none bg-blue-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CREDX Staked</CardTitle>
-            <TrendingUp className="size-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium text-white/90">CREDX Staked</CardTitle>
+            <TrendingUp className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(utilityStaked).toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">In Tier 2</p>
+            <p className="text-xs text-white/80">In Tier 2</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 bg-card/50">
+        {/* 3. Pending CGOV (Purple) */}
+        <Card className="border-none bg-purple-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending CGOV</CardTitle>
-            <Gift className="size-4 text-purple-500" />
+            <CardTitle className="text-sm font-medium text-white/90">Pending CGOV</CardTitle>
+            <Gift className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(pendingCGOV).toFixed(4)}</div>
-            <p className="text-xs text-muted-foreground">Claimable</p>
+            <p className="text-xs text-white/80">Claimable</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 bg-card/50">
+        {/* 4. CGOV Balance (Purple) */}
+        <Card className="border-none bg-purple-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CGOV Balance</CardTitle>
-            <Coins className="size-4 text-purple-500" />
+            <CardTitle className="text-sm font-medium text-white/90">CGOV Balance</CardTitle>
+            <Coins className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(cgovBalance).toFixed(4)}</div>
-            <p className="text-xs text-muted-foreground">Governance</p>
+            <p className="text-xs text-white/80">Governance</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 bg-card/50">
+        {/* 5. CGOV Staked (Emerald) */}
+        <Card className="border-none bg-emerald-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CGOV Staked</CardTitle>
-            <TrendingUp className="size-4 text-emerald-500" />
+            <CardTitle className="text-sm font-medium text-white/90">CGOV Staked</CardTitle>
+            <TrendingUp className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(cgovStaked).toFixed(4)}</div>
-            <p className="text-xs text-muted-foreground">In Tier 3</p>
+            <p className="text-xs text-white/80">In Tier 3</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 bg-card/50">
+        {/* 6. Pending MATIC (Amber) */}
+        <Card className="border-none bg-amber-500 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending MATIC</CardTitle>
-            <Gift className="size-4 text-amber-500" />
+            <CardTitle className="text-sm font-medium text-white/90">Pending MATIC</CardTitle>
+            <Gift className="size-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{parseFloat(pendingMATIC).toFixed(6)}</div>
-            <p className="text-xs text-muted-foreground">Real Yield</p>
+            <p className="text-xs text-white/80">Real Yield</p>
           </CardContent>
         </Card>
       </div>

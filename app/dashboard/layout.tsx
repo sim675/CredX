@@ -90,7 +90,7 @@ function DashboardContent({
                 <BreadcrumbList>
                   <BreadcrumbItem>
                     <BreadcrumbPage className="text-white/90">
-                      {user.role === "msme" ? "MSME Portal" : user.role === "investor" ? "Investor Portal" : "Buyer Portal"} — POL
+                      {user.role === "msme" ? "MSME Portal" : user.role === "investor" ? "Investor Portal" : "Buyer Portal"} — SepoliaETH
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
@@ -99,7 +99,7 @@ function DashboardContent({
 
             <div className="flex items-center gap-4">
               <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-emerald-400">
-                {displayBalance()} POL
+                {displayBalance()} SepoliaETH
               </div>
               <WalletDropdown />
             </div>

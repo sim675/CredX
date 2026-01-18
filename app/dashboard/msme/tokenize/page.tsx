@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation"
 import InvoiceMarketplaceABI from "@/lib/contracts/InvoiceMarketplace.json"
 import { addOrUpdatePendingInvoice, updatePendingInvoiceStatus, removePendingInvoice } from "@/lib/pendingInvoices"
 
-// 1. Import the Rye font (Optional: assumes you want the western style here too based on context)
+// 1. Import the Rye font
 import { Rye } from 'next/font/google'
 
 const rye = Rye({ 
@@ -400,9 +400,7 @@ export default function TokenizeInvoice() {
       <div className="absolute top-10 left-10 -z-10 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-10 right-10 -z-10 w-[300px] h-[300px] bg-orange-600/10 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* FIXED: Added 'items-center', 'text-center' to align header text to the center 
-        relative to the card below. Also applied rye font.
-      */}
+      {/* Header */}
       <div className="flex flex-col items-center text-center space-y-2 mb-4">
         <h1 className={`text-5xl font-bold tracking-tight text-white drop-shadow-sm uppercase ${rye.className}`}>
             Tokenize Invoice
@@ -488,7 +486,7 @@ export default function TokenizeInvoice() {
                 )}
               </div>
 
-              {/* --- Visibility Section (Styled for Glassmorphism) --- */}
+              {/* --- Visibility Section --- */}
               <div className="grid md:grid-cols-2 gap-8">
                  <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Visibility</Label>
@@ -587,7 +585,9 @@ export default function TokenizeInvoice() {
                         onChange={handleChange}
                         placeholder="1000.00" 
                         required 
-                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11 font-bold tracking-wide"
+                        // FIXED: Added onWheel to remove focus on scroll
+                        onWheel={(e) => e.currentTarget.blur()}
+                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11 font-bold tracking-wide [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
@@ -605,7 +605,9 @@ export default function TokenizeInvoice() {
                         onChange={handleChange}
                         placeholder="5.0" 
                         required 
-                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11"
+                        // FIXED: Added onWheel to remove focus on scroll
+                        onWheel={(e) => e.currentTarget.blur()}
+                        className="pl-10 bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/30 h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>

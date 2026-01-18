@@ -16,15 +16,43 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth"; 
 import { formatEther } from "viem";
 import { cn } from "@/lib/utils";
-// 1. IMPORT THE FONT HERE
+// 1. IMPORT THE FONT
 import { Rye } from 'next/font/google';
+// 2. UPDATED FRAMER MOTION IMPORTS
+import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 
-// 2. CONFIGURE THE FONT
+// 3. CONFIGURE THE FONT
 const rye = Rye({ 
   weight: '400', 
   subsets: ['latin'],
   display: 'swap',
 });
+
+// --- HELPER: ANIMATED BALANCE COUNTER ---
+const AnimatedBalance = ({ value }: { value: number }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  // We use useMotionValue to track the state without re-rendering the component 60fps
+  const motionValue = useMotionValue(0);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    // Animate from 0 (or current) to the new value
+    const controls = animate(motionValue, value, {
+      duration: 2, // Animation duration in seconds
+      ease: "easeOut",
+      onUpdate: (latest) => {
+        // Directly update the DOM node text for performance
+        node.textContent = latest.toFixed(4);
+      },
+    });
+
+    return () => controls.stop();
+  }, [value, motionValue]);
+
+  return <span ref={ref}>{value.toFixed(4)}</span>;
+};
 
 // --- CIRCULAR PROGRESS COMPONENT ---
 const CircleProgress = ({ percentage, color }: { percentage: number; color: string }) => {
@@ -37,8 +65,27 @@ const CircleProgress = ({ percentage, color }: { percentage: number; color: stri
   return (
     <div className="relative flex items-center justify-center">
       <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg]">
-        <circle stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
-        <circle stroke={color} strokeWidth={stroke} strokeDasharray={circumference + " " + circumference} style={{ strokeDashoffset, transition: "stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)" }} strokeLinecap="round" fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+        <circle 
+          stroke="rgba(255,255,255,0.08)" 
+          strokeWidth={stroke} 
+          fill="transparent" 
+          r={normalizedRadius} 
+          cx={radius} 
+          cy={radius} 
+        />
+        <motion.circle
+          stroke={color}
+          strokeWidth={stroke}
+          strokeDasharray={circumference + " " + circumference}
+          strokeLinecap="round"
+          fill="transparent"
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: strokeDashoffset }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+        />
       </svg>
       <span className="absolute text-sm font-bold text-white/90">{percentage}%</span>
     </div>
@@ -49,6 +96,9 @@ const CircleProgress = ({ percentage, color }: { percentage: number; color: stri
 const WalletCreditCard = ({ address, balance }: { address: string | undefined, balance: string | undefined }) => {
   const formatAddr = (addr: string) => `${addr.slice(0, 4)}  ${addr.slice(4, 8)}  ${addr.slice(8, 12)}  ${addr.slice(-4)}`;
   
+  // Convert string balance to number for the animation
+  const numericBalance = balance ? parseFloat(balance) : 0;
+
   return (
     <div className="relative w-full h-full min-h-[220px] rounded-2xl overflow-hidden p-6 flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] shadow-2xl">
       <div className="absolute inset-0 bg-gradient-to-br from-[#4361ee] via-[#3a0ca3] to-[#7209b7] z-0" />
@@ -73,8 +123,10 @@ const WalletCreditCard = ({ address, balance }: { address: string | undefined, b
 
         <div className="mt-4">
           <p className="text-xs text-blue-100/80 font-medium tracking-wider mb-1">CURRENT BALANCE</p>
-          <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">
-            {balance ? parseFloat(balance).toFixed(4) : "0.0000"} <span className="text-lg font-normal opacity-80">POL</span>
+          <h2 className="text-3xl font-bold tracking-tight text-white drop-shadow-md flex items-center gap-2">
+            {/* Replaced static text with AnimatedBalance component */}
+            <AnimatedBalance value={numericBalance} />
+            <span className="text-lg font-normal opacity-80">SepoliaETH</span>
           </h2>
         </div>
 
@@ -106,7 +158,7 @@ export default function MSMEDashboard() {
   
   // --- CHAT STATE ---
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isChatExpanded, setIsChatExpanded] = useState(false); // Optional: for full screen mode
+  const [isChatExpanded, setIsChatExpanded] = useState(false); 
   
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);

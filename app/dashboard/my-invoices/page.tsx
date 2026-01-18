@@ -11,6 +11,16 @@ import { useToast } from "@/components/ui/use-toast"
 import { Wallet, FileText, Calendar, DollarSign, ExternalLink } from "lucide-react"
 import { useInvoiceNFT } from "@/lib/contracts/useInvoiceNFT"
 
+// 1. IMPORT THE MINECRAFT FONT
+import { Press_Start_2P } from "next/font/google"
+
+// 2. CONFIGURE THE FONT
+const minecraft = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"],
+  display: "swap" 
+})
+
 interface InvoiceMetadata {
   amount?: string
   dueDate?: string
@@ -165,7 +175,10 @@ export default function MyInvoicesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Invoices</h1>
+        {/* 3. APPLY THE MINECRAFT FONT HERE */}
+        <h1 className={`${minecraft.className} text-2xl md:text-3xl font-bold tracking-tight leading-relaxed py-1`}>
+          My Invoices
+        </h1>
         <p className="text-muted-foreground">View your CINVOICE NFTs and associated invoice details.</p>
       </div>
 
