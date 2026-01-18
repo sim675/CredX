@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import crypto from "crypto"; // Standard import is fine for Node.js runtime
 
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
@@ -15,8 +16,6 @@ const resendSchema = z.object({
     }),
 });
 
-// Resend an email verification link to a user who has not yet verified
-// their email address.
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -38,18 +37,17 @@ export async function POST(req: NextRequest) {
 
     const user = await User.findOne({ email });
 
+    // 1. Security: Don't leak user existence
     if (!user) {
-      // We don't reveal whether the email exists to avoid leaking account
-      // information. Always respond with a generic success message.
       return NextResponse.json(
         {
-          message:
-            "If an account exists for this email, a new verification link has been sent.",
+          message: "If an account exists for this email, a new verification link has been sent.",
         },
         { status: 200 }
       );
     }
 
+    // 2. Check if already verified
     if (user.isVerified) {
       return NextResponse.json(
         {
@@ -59,8 +57,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate a fresh token and expiry window for this resend operation.
-    const crypto = await import("crypto");
+    // 3. Optional Rate Limiting: Prevent spamming resend requests
+    // Only allow resending if the previous token was created more than 2 minutes ago
+    if (user.verificationTokenExpiry) {
+      const lastRequestAge = 24 * 60 * 60 * 1000 - (user.verificationTokenExpiry.getTime() - Date.now());
+      const COOLDOWN_PERIOD = 2 * 60 * 1000; // 2 minutes
+
+      if (lastRequestAge < COOLDOWN_PERIOD) {
+        return NextResponse.json(
+          { error: "Please wait a few minutes before requesting another email." },
+          { status: 429 }
+        );
+      }
+    }
+
+    // 4. Generate fresh token
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
@@ -68,6 +79,8 @@ export async function POST(req: NextRequest) {
     user.verificationTokenExpiry = verificationTokenExpiry;
     await user.save();
 
+    // 5. Send Email
+    // 
     await sendVerificationEmail({
       to: user.email,
       token: verificationToken,
@@ -81,7 +94,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Resend verification email error", error);
+    console.error("Resend verification email error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

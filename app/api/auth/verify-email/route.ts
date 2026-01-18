@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 
 // Verify a user's email based on a one-time token.
-// This endpoint is called from the /verify page once the user clicks the
-// verification link in their email.
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
 
@@ -19,28 +16,33 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
 
+    // Find user with the matching token
     const user = await User.findOne({ verificationToken: token });
 
+    // 1. If no user found with that token
     if (!user) {
+      // Small artificial delay to prevent brute-force timing attacks
+      await new Promise((resolve) => setTimeout(resolve, 500));
       return NextResponse.json(
         { error: "Invalid or expired verification link" },
         { status: 400 }
       );
     }
 
+    // 2. Handle already verified status
     if (user.isVerified) {
-      // If the user is already verified we simply acknowledge it.
       return NextResponse.json(
         { message: "Email is already verified." },
         { status: 200 }
       );
     }
 
+    // 3. Check Expiry Window
+    // 
     if (
       user.verificationTokenExpiry &&
       user.verificationTokenExpiry.getTime() < Date.now()
     ) {
-      // Token exists but is past its expiry window.
       return NextResponse.json(
         {
           error:
@@ -50,10 +52,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Mark the account as verified and clear the token so it cannot be reused.
+    // 4. Update User: Atomic mark as verified and wipe token fields
     user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpiry = undefined;
+    
+    // Using null ensures the fields are cleared in MongoDB
+    user.verificationToken = null as any; 
+    user.verificationTokenExpiry = null as any;
+
     await user.save();
 
     return NextResponse.json(
@@ -61,7 +66,7 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Email verification error", error);
+    console.error("Email verification error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

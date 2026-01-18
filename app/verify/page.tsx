@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
@@ -11,11 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 
-// This page is the landing destination for the verification link sent in email.
-// It reads the token from the URL, calls the backend verification endpoint,
-// and renders loading/success/error states. In the error state the user can
-// request that a new verification email be sent.
-export default function VerifyEmailPage() {
+// --- Logic Component ---
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
@@ -98,11 +95,85 @@ export default function VerifyEmailPage() {
   const isError = status === "error"
 
   return (
+    <>
+      <CardContent className="space-y-6">
+        {isLoading && (
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-white/80">Verifying your email, please wait...</p>
+          </div>
+        )}
+
+        {isSuccess && (
+          <div className="flex flex-col items-center gap-4">
+            <CheckCircle className="h-10 w-10 text-emerald-400" />
+            <p className="text-white/90 font-medium text-center">{message}</p>
+            <p className="text-sm text-white/60 text-center">
+              You can now sign in and access your dashboard.
+            </p>
+          </div>
+        )}
+
+        {isError && (
+          <div className="space-y-4">
+            <Alert variant="destructive" className="bg-red-900/20 border-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+
+            <form onSubmit={handleResend} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resend-email" className="text-white/80">
+                  Email address used during signup
+                </Label>
+                <Input
+                  id="resend-email"
+                  type="email"
+                  required
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  className="bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)] backdrop-blur-sm"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isResendLoading}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {isResendLoading ? "Sending..." : "Resend Verification Email"}
+              </Button>
+
+              {resendMessage && (
+                <Alert className="bg-white/5 border-white/10">
+                  <AlertDescription>{resendMessage}</AlertDescription>
+                </Alert>
+              )}
+            </form>
+          </div>
+        )}
+      </CardContent>
+
+      <CardFooter className="flex flex-col gap-3 items-center">
+        <Button asChild variant="outline" className="w-full border-white/20 text-white/90">
+          <Link href="/auth/signin">Go to Login</Link>
+        </Button>
+        <Button asChild variant="ghost" className="text-white/70 hover:text-white">
+          <Link href="/">Back to Home</Link>
+        </Button>
+      </CardFooter>
+    </>
+  )
+}
+
+// --- Main Page Wrapper (Build-Safe) ---
+export default function VerifyEmailPage() {
+  return (
     <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden py-12 px-4">
-      {/* Background Orbs to match auth pages */}
-      <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.65)] -top-40 -left-40 animate-pulse" />
+      {/* Background Orbs */}
+      <div className="pointer-events-none absolute w-[650px] h-[650px] rounded-full blur-[160px] bg-[rgba(255,130,30,0.4)] -top-40 -left-40 animate-pulse" />
       <div
-        className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.3)] bottom-0 right-0 animate-pulse"
+        className="pointer-events-none absolute w-[800px] h-[800px] rounded-full blur-[220px] bg-[rgba(255,200,60,0.2)] bottom-0 right-0 animate-pulse"
         style={{ animationDelay: "1s" }}
       />
 
@@ -111,73 +182,15 @@ export default function VerifyEmailPage() {
           <CardTitle className="text-3xl font-bold">Email Verification</CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {isLoading && (
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-white/80">Verifying your email, please wait...</p>
-            </div>
-          )}
-
-          {isSuccess && (
-            <div className="flex flex-col items-center gap-4">
-              <CheckCircle className="h-10 w-10 text-emerald-400" />
-              <p className="text-white/90 font-medium text-center">{message}</p>
-              <p className="text-sm text-white/60 text-center">
-                You can now sign in and access your dashboard.
-              </p>
-            </div>
-          )}
-
-          {isError && (
-            <div className="space-y-4">
-              <Alert variant="destructive" className="bg-red-900/20 border-red-800">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{message}</AlertDescription>
-              </Alert>
-
-              {/* Allow the user to request a new verification email if needed */}
-              <form onSubmit={handleResend} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="resend-email" className="text-white/80">
-                    Email address used during signup
-                  </Label>
-                  <Input
-                    id="resend-email"
-                    type="email"
-                    required
-                    value={resendEmail}
-                    onChange={(e) => setResendEmail(e.target.value)}
-                    className="bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:shadow-[0_0_0_2px_rgba(255,122,24,0.25)] backdrop-blur-sm"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isResendLoading}
-                  className="w-full"
-                >
-                  {isResendLoading ? "Sending..." : "Resend Verification Email"}
-                </Button>
-
-                {resendMessage && (
-                  <Alert className="bg-white/5 border-white/10">
-                    <AlertDescription>{resendMessage}</AlertDescription>
-                  </Alert>
-                )}
-              </form>
-            </div>
-          )}
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-3 items-center">
-          <Button asChild variant="outline" className="w-full border-white/20 text-white/90">
-            <Link href="/auth/signin">Go to Login</Link>
-          </Button>
-          <Button asChild variant="ghost" className="text-white/70 hover:text-white">
-            <Link href="/">Back to Home</Link>
-          </Button>
-        </CardFooter>
+        {/* Suspense Boundary is the key fix for the Vercel Build Error */}
+        <Suspense fallback={
+          <CardContent className="flex flex-col items-center py-12 gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+            <p className="text-white/50">Initializing verification...</p>
+          </CardContent>
+        }>
+          <VerifyEmailContent />
+        </Suspense>
       </Card>
     </div>
   )
