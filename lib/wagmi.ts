@@ -2,13 +2,19 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { sepolia } from 'wagmi/chains';
 import { http } from 'wagmi';
 
+// Use the exact variable name you added to Vercel
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
+
+if (!projectId) {
+  console.warn("Warning: NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not defined");
+}
+
 export const config = getDefaultConfig({
   appName: 'CredX Invoice Protocol',
-  // Get your Project ID at https://cloud.walletconnect.com
-  projectId: '8e0a821ee5bd57d2092b3dceffb38d08', 
+  projectId: projectId, 
   chains: [sepolia],
   transports: {
-    [sepolia.id]: http(), // Uses default public RPC, or add a private one like Alchemy
+    [sepolia.id]: http(),
   },
-  ssr: true, 
+  ssr: true, // This helps prevent hydration errors in Next.js
 });
