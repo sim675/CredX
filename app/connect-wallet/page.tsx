@@ -1,5 +1,8 @@
 "use client";
 
+// Force Next.js to skip prerendering this page during build
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
@@ -13,27 +16,35 @@ export default function ConnectWalletPage() {
   const { disconnect } = useDisconnect();
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  
+  // States
+  const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if not authenticated
+  // 1. Handle Mounting to prevent Hydration/Prerender errors
   useEffect(() => {
-    if (!authLoading && !user) {
+    setMounted(true);
+  }, []);
+
+  // 2. Redirect if not authenticated
+  useEffect(() => {
+    if (mounted && !authLoading && !user) {
       router.push("/auth/signin");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, mounted]);
 
-  // Redirect if user already has wallet bound
+  // 3. Redirect if user already has wallet bound
   useEffect(() => {
-    if (!authLoading && user?.walletAddress && isConnected) {
+    if (mounted && !authLoading && user?.walletAddress && isConnected) {
       redirectToDashboard();
     }
-  }, [user, authLoading, isConnected]);
+  }, [user, authLoading, isConnected, mounted]);
 
-  // Handle wallet connection and save
+  // 4. Handle wallet connection and save to DB
   useEffect(() => {
     const saveWalletAddress = async () => {
-      if (!isConnected || !address || !user || user.walletAddress) return;
+      if (!mounted || !isConnected || !address || !user || user.walletAddress) return;
 
       setIsSaving(true);
       setError(null);
@@ -51,8 +62,10 @@ export default function ConnectWalletPage() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to save wallet address");
 
+        // Update local session
         const updatedUser = { ...user, walletAddress: address.toLowerCase() };
         localStorage.setItem("invochain_user", JSON.stringify(updatedUser));
+        
         redirectToDashboard();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to save wallet address");
@@ -61,7 +74,7 @@ export default function ConnectWalletPage() {
     };
 
     saveWalletAddress();
-  }, [isConnected, address, user]);
+  }, [isConnected, address, user, mounted]);
 
   const redirectToDashboard = () => {
     if (!user) return;
@@ -69,7 +82,8 @@ export default function ConnectWalletPage() {
     router.push(`/dashboard/${routes[user.role as keyof typeof routes]}`);
   };
 
-  if (authLoading) {
+  // Prevent rendering hooks UI until client-side hydration is complete
+  if (!mounted || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0500]">
         <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
@@ -111,8 +125,8 @@ export default function ConnectWalletPage() {
         {/* RainbowKit Connect Button Customization */}
         <div className="flex justify-center mb-6">
           <ConnectButton.Custom>
-            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
-              const ready = mounted;
+            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted: rainbowMounted }) => {
+              const ready = mounted && rainbowMounted;
               const connected = ready && account && chain;
 
               return (
@@ -137,7 +151,7 @@ export default function ConnectWalletPage() {
                     }
                     return (
                       <div className="flex flex-col gap-3">
-                         <div className="px-6 py-3 bg-orange-500/10 border border-orange-500/30 rounded-xl text-orange-200 text-sm">
+                         <div className="px-6 py-3 bg-orange-500/10 border border-orange-500/30 rounded-xl text-orange-200 text-sm font-mono">
                             {account.displayName}
                          </div>
                          {isSaving && (

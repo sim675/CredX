@@ -24,6 +24,8 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
   walletAddress: {
     type: String,
     required: false,
+    unique: true,    // Ensures one wallet can't be used for multiple accounts
+    sparse: true,    // CRITICAL: Allows multiple users to have 'null' walletAddress
     index: true,
     lowercase: true, // Automatically converts 0xABC to 0xabc before saving
     trim: true,      // Removes any accidental white space
@@ -34,6 +36,7 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Fix for Next.js hot-reloading: ensures model isn't re-compiled
 const User: Model<IUser> =
   (mongoose.models.User as Model<IUser>) ||
   mongoose.model<IUser>("User", UserSchema);
