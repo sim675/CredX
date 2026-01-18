@@ -110,9 +110,16 @@ contract StakingRewards {
 
     /// @notice Called by InvoiceNFT to distribute protocol fees
     /// @dev Implements O(1) Synthetix-style instant reward distribution
+    /// @dev When no stakers exist, fees accumulate and are distributed when first staker joins
     function notifyRewardAmount() external payable {
         if (msg.value == 0) revert ZeroAmount();
-        if (totalStaked == 0) revert NoStakers();
+        
+        // If no stakers, accumulate rewards in contract balance
+        // They will be distributed proportionally when stakers join
+        if (totalStaked == 0) {
+            emit RewardsAdded(msg.value);
+            return;
+        }
 
         unchecked {
             uint256 rewardPerTokenIncrement = (msg.value * 1e18) / totalStaked;

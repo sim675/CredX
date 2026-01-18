@@ -71,7 +71,7 @@ contract InvoiceNFT is ERC721URIStorage, Ownable {
         _setTokenURI(tokenId, uri);
     }
 
-    /// @notice Repay an invoice - 5% fee goes to StakingRewards, rest to MSME
+    /// @notice Repay an invoice - 5% fee to StakingRewards, rest to Marketplace for investor claims
     /// @param tokenId Invoice NFT ID to repay
     function repayInvoice(uint256 tokenId) external payable {
         InvoiceData storage data = invoiceData[tokenId];
@@ -84,10 +84,10 @@ contract InvoiceNFT is ERC721URIStorage, Ownable {
 
         // Calculate 5% protocol fee
         uint256 fee;
-        uint256 msmeAmount;
+        uint256 investorAmount;
         unchecked {
             fee = (msg.value * FEE_BPS) / 10_000;
-            msmeAmount = msg.value - fee;
+            investorAmount = msg.value - fee;
         }
 
         // Send fee to StakingRewards vault
@@ -95,9 +95,8 @@ contract InvoiceNFT is ERC721URIStorage, Ownable {
             IStakingRewards(stakingRewards).notifyRewardAmount{value: fee}();
         }
 
-        // Send remainder to MSME (NFT owner)
-        address msme = ownerOf(tokenId);
-        (bool sent, ) = payable(msme).call{value: msmeAmount}("");
+        // Send remainder to Marketplace for investor claiming
+        (bool sent, ) = payable(marketplace).call{value: investorAmount}("");
         if (!sent) revert TransferFailed();
 
         emit InvoiceRepaid(tokenId, msg.sender, msg.value, fee);

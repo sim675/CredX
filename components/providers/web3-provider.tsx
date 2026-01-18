@@ -1,24 +1,14 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, polygon, polygonAmoy } from "wagmi/chains";
+import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { wagmiConfig } from "@/lib/web3/config";
 
 // 1. Define the config directly inside or import carefully.
 // I've defined it here to solve your "Module Not Found" error immediately.
-const config = getDefaultConfig({
-  appName: 'InvoChain',
-  projectId: 'YOUR_PROJECT_ID', // Replace with your WalletConnect ID
-  chains: [mainnet, polygon, polygonAmoy],
-  ssr: true, // This helps with Next.js hydration
-  transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [polygonAmoy.id]: http(),
-  },
-});
+const config = wagmiConfig;
 
 const queryClient = new QueryClient();
 

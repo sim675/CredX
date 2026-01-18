@@ -349,7 +349,7 @@ export default function TokenizeInvoice() {
 
       setTimeout(() => {
         router.refresh()
-        router.push("/dashboard/msme")
+        router.push("/dashboard/msme/active")
       }, 3000)
 
     } catch (error: any) {

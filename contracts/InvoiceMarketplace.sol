@@ -273,4 +273,8 @@ contract InvoiceMarketplace {
     function getInvestors(uint256 id) external view invoiceExists(id) returns (address[] memory) {
         return _investors[id];
     }
+
+    /// @notice Receive MATIC from InvoiceNFT repayments
+    /// @dev Funds are held here for investors to claim via claimRepayment()
+    receive() external payable {}
 }

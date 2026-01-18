@@ -20,7 +20,7 @@ async function main() {
   console.log("-----------------------------------------------");
 
   // Get existing contract addresses from your addresses.ts
-  const INVOICE_NFT_ADDRESS = "0xabf11a754296Bd5395c1547dEbE3fAb181158314";
+  const INVOICE_NFT_ADDRESS = "0x980f2D43c3664B090F4b1B7B5f7E296B4c118c7D";
   
   console.log("Using existing InvoiceNFT:", INVOICE_NFT_ADDRESS);
 

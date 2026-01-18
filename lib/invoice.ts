@@ -4,7 +4,7 @@ import InvoiceMarketplaceABI from "./contracts/InvoiceMarketplace.json";
 import type { PublicClient } from "viem";
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology";
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://sepolia.drpc.org";
 
 // PERSON A: Added missing exports for UI Filters
 export type YieldRange = 'low' | 'medium' | 'high';

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
+import { useAccount } from "wagmi";
 import { Invoice, getStatusLabel, getInvoiceAction, InvoiceAction } from "@/lib/invoice";
 import { useAuth } from "@/hooks/use-auth";
 import { useInvoiceContract } from "@/lib/contracts/useInvoiceContract";
@@ -12,6 +13,7 @@ interface InvoiceCardProps {
 
 export default function InvoiceCard({ invoice }: InvoiceCardProps) {
   const { user } = useAuth();
+  const { address: connectedAddress } = useAccount();
   const { getWriteContract } = useInvoiceContract();
 
   const [isPending, setIsPending] = useState(false);
@@ -20,10 +22,12 @@ export default function InvoiceCard({ invoice }: InvoiceCardProps) {
   const statusLabel = getStatusLabel(invoice.status);
   const isExpired = new Date() > invoice.dueDate;
 
-  const walletAddress = user?.walletAddress?.toLowerCase();
-  const isBuyer = walletAddress
-    ? invoice.buyer.toLowerCase() === walletAddress
+  // Prefer the currently connected wallet, but fall back to the bound auth wallet.
+  const effectiveWallet = (connectedAddress || user?.walletAddress || "").toLowerCase();
+  const isBuyer = effectiveWallet
+    ? invoice.buyer.toLowerCase() === effectiveWallet
     : false;
+
   const hasInvestment = Number(userInvestment) > 0;
 
   const action: InvoiceAction = user
@@ -38,7 +42,7 @@ export default function InvoiceCard({ invoice }: InvoiceCardProps) {
 
   useEffect(() => {
     const fetchInvestment = async () => {
-      if (!walletAddress) return;
+      if (!effectiveWallet) return;
 
       try {
         const provider = new ethers.JsonRpcProvider(
@@ -50,7 +54,8 @@ export default function InvoiceCard({ invoice }: InvoiceCardProps) {
           require("@/lib/contracts/InvoiceMarketplace.json").abi,
           provider
         );
-        const raw = await contract.investments(invoice.id, walletAddress);
+        const raw = await contract.investments(invoice.id, effectiveWallet);
+
         setUserInvestment(ethers.formatEther(raw));
       } catch (err) {
         console.error("Failed to fetch user investment", err);
@@ -58,7 +63,7 @@ export default function InvoiceCard({ invoice }: InvoiceCardProps) {
     };
 
     fetchInvestment();
-  }, [invoice.id, walletAddress]);
+  }, [invoice.id, effectiveWallet]);
 
   const handleAction = async () => {
     if (!user) {
