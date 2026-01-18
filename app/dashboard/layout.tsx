@@ -15,6 +15,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 // Dynamically import WalletDropdown with SSR disabled
 const WalletDropdown = dynamic(
@@ -25,59 +31,29 @@ const WalletDropdown = dynamic(
   }
 );
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
+/**
+ * INNER COMPONENT: This component is safely nested inside the Web3Provider.
+ * It handles all Wagmi-related hooks.
+ */
+function DashboardContent({ 
+  user, 
+  children 
+}: { 
+  user: any; 
+  children: React.ReactNode 
 }) {
-  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
     address,
   });
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+
   const [walletMismatch, setWalletMismatch] = useState(false);
 
-  // Set mounted state after component mounts
+  // 🛡️ Wallet Guard Logic
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  // 🔐 Protect dashboard routes
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/auth/signin");
-      return;
-    }
-
-    // Redirect to wallet connection if wallet not bound
-    if (!isLoading && user && !user.walletAddress) {
-      router.push("/connect-wallet");
-      return;
-    }
-  }, [user, isLoading, router]);
-
-  // 🛡️ Wallet consistency guard
-  useEffect(() => {
-    if (!mounted || !user || !user.walletAddress) return;
-
-    // If wallet is required but not connected, redirect to connect
-    if (!isConnected) {
-      router.push("/connect-wallet");
-      return;
-    }
+    if (!user || !user.walletAddress || !isConnected) return;
 
     const userWallet = user.walletAddress.toLowerCase();
     const connectedWallet = address?.toLowerCase();
@@ -87,49 +63,34 @@ export default function DashboardLayout({
     } else {
       setWalletMismatch(false);
     }
-  }, [mounted, user, isConnected, address, router]);
+  }, [user, isConnected, address]);
 
-  // ⏳ Loading state
-  if (isLoading || !user || !mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  // app/dashboard/layout.tsx
+  const displayBalance = () => {
+    if (isLoadingBalance || !balanceData) return "0.0000";
+    const ethString = formatEther(balanceData.value);
+    const [integers, decimals] = ethString.split(".");
+    return decimals ? `${integers}.${decimals.slice(0, 4)}` : integers;
+  };
 
   return (
-    // 1. OUTER CONTAINER: h-screen + overflow-hidden locks the window size.
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Background Layers */}
+    <div className="relative h-screen w-full overflow-hidden bg-[#020817]">
       <div className="web3-bg" />
-      <div className="web3-grid" />
+      <div className="web3-grid opacity-20" />
       <div className="web3-glow" />
 
-      {/* 2. SIDEBAR PROVIDER: Must be h-full to fill the screen and not grow. */}
       <SidebarProvider style={{ background: 'transparent' }} className="h-full w-full">
-        
         <AppSidebar role={user.role} className="bg-transparent border-r border-white/10" />
 
-        {/* 3. SIDEBAR INSET: overflow-hidden ensures inner elements don't expand this container. */}
         <SidebarInset className="bg-transparent flex flex-col h-full overflow-hidden">
-          
-          {/* Header: Flex-none prevents it from shrinking/growing unexpectedly */}
-          <header className="flex-none flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4 bg-transparent backdrop-blur-sm">
+          <header className="flex-none flex h-16 shrink-0 items-center justify-between border-b border-white/5 px-4 bg-transparent backdrop-blur-md z-20">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="h-4 mx-2" />
+              <Separator orientation="vertical" className="h-4 mx-2 bg-white/10" />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      {user.role === "msme"
-                        ? "MSME Portal - POL"
-                        : user.role === "investor"
-                        ? "Investor Portal - POL"
-                        : "Big Buyer Portal - POL"}
+                    <BreadcrumbPage className="text-white/90">
+                      {user.role === "msme" ? "MSME Portal" : user.role === "investor" ? "Investor Portal" : "Buyer Portal"} — POL
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
@@ -137,37 +98,76 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="text-sm font-medium">
-                {isLoadingBalance ? "Loading..." : `${balanceData ? parseFloat(formatEther(BigInt(balanceData.value))).toFixed(4) : "0.0000"} POL`}
+              <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-emerald-400">
+                {displayBalance()} POL
               </div>
               <WalletDropdown />
             </div>
           </header>
 
-          {/* Mismatch Warning */}
           {walletMismatch && (
-            <div className="flex-none border-b border-destructive/50 bg-destructive/10 px-4 py-3">
-              <Alert variant="destructive" className="border-destructive">
+            <div className="flex-none border-b border-destructive/50 bg-destructive/10 px-4 py-3 z-20">
+              <Alert variant="destructive" className="border-destructive bg-transparent">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Wallet Mismatch</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>
-                    Please connect your registered wallet ({user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}) to continue.
+                    Connect: {user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}
                   </span>
-                  <Button variant="outline" size="sm" onClick={() => disconnect()} className="ml-4">
-                    Disconnect & Switch
+                  <Button variant="outline" size="sm" onClick={() => disconnect()} className="ml-4 border-destructive text-destructive hover:bg-destructive hover:text-white">
+                    Disconnect
                   </Button>
                 </AlertDescription>
               </Alert>
             </div>
           )}
 
-          {/* 4. MAIN: flex-1 takes remaining space, overflow-y-auto enables vertical scrolling. */}
-          <main className={`flex-1 flex flex-col gap-4 p-4 md:p-8 bg-transparent overflow-y-auto relative z-10 ${walletMismatch ? "pointer-events-none opacity-50" : ""}`}>
+          <main className={`flex-1 flex flex-col p-4 md:p-8 overflow-y-auto relative z-10 transition-opacity duration-300 ${walletMismatch ? "pointer-events-none opacity-30 grayscale" : ""}`}>
             {children}
           </main>
         </SidebarInset>
       </SidebarProvider>
     </div>
   );
+}
+
+/**
+ * MAIN EXPORT: This component handles Auth and Mounting.
+ * It DOES NOT call Wagmi hooks directly.
+ */
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Auth Protection
+  useEffect(() => {
+    if (mounted && !isAuthLoading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [mounted, user, isAuthLoading, router]);
+
+  // Loading state
+  if (!mounted || isAuthLoading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#020817]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+          <p className="text-muted-foreground animate-pulse font-mono text-sm">Securing Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Once we are mounted and authed, we render the Content component
+  // which can safely use Wagmi hooks.
+  return <DashboardContent user={user}>{children}</DashboardContent>;
 }
